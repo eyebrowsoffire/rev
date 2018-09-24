@@ -8,14 +8,27 @@ target_sources(revEngine PRIVATE
   include/rev/Camera.h
   include/rev/Engine.h
   include/rev/Environment.h
+  include/rev/Model.h
   include/rev/Scene.h
+  include/rev/SceneObject.h
   include/rev/SceneView.h
   include/rev/Types.h
   include/rev/Window.h
 
+  include/rev/gl/Buffer.h
+  include/rev/gl/Context.h
+  include/rev/gl/FrameBuffer.h
+  include/rev/gl/Program.h
+  include/rev/gl/Resource.h
+  include/rev/gl/Texture.h
+  include/rev/gl/Uniform.h
+  include/rev/gl/VertexArray.h
+
   src/Camera.cpp
   src/Engine.cpp
   src/Environment.cpp
+  src/Model.cpp
+  src/SceneObject.cpp
   src/SceneView.cpp
   src/Window.cpp
 )
