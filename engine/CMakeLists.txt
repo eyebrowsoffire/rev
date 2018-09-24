@@ -5,6 +5,7 @@ add_library(revEngine STATIC)
 
 target_sources(revEngine PRIVATE
   include/rev/Actor.h
+  include/rev/Camera.h
   include/rev/Engine.h
   include/rev/Environment.h
   include/rev/Scene.h
@@ -12,6 +13,7 @@ target_sources(revEngine PRIVATE
   include/rev/Types.h
   include/rev/Window.h
 
+  src/Camera.cpp
   src/Engine.cpp
   src/Environment.cpp
   src/SceneView.cpp
