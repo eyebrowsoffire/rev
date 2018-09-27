@@ -49,24 +49,24 @@ class Shader : public Resource<createShader<shaderType>, glDeleteShader>
         Expects(length <= std::numeric_limits<GLint>::max());
 
         auto glLength = static_cast<GLint>(length);
-        glShaderSource(getId(), 1, &data, &glLength);
+        glShaderSource(this->getId(), 1, &data, &glLength);
     }
 
     void compile()
     {
-        glCompileShader(getId());
+        glCompileShader(this->getId());
     }
 
     bool getCompileStatus()
     {
         GLint status;
-        glGetShaderiv(getId(), GL_COMPILE_STATUS, &status);
+        glGetShaderiv(this->getId(), GL_COMPILE_STATUS, &status);
         return (status == GL_TRUE);
     }
 
     std::string getCompileLog()
     {
-        return detail::extractLog<glGetShaderiv, glGetShaderInfoLog>(getId());
+        return detail::extractLog<glGetShaderiv, glGetShaderInfoLog>(this->getId());
     }
 };
 

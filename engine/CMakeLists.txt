@@ -28,6 +28,7 @@ target_sources(revEngine PRIVATE
   src/Engine.cpp
   src/Environment.cpp
   src/Model.cpp
+  src/Scene.cpp
   src/SceneObject.cpp
   src/SceneView.cpp
   src/Window.cpp

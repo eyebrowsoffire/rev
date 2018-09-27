@@ -4,6 +4,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include <iostream>
+
 namespace
 {
 void initGLFW()
@@ -29,6 +31,14 @@ Window::Window(const std::string &title, const RectSize<int> size)
     : _data(std::make_unique<WindowData>())
 {
     initGLFW();
+    glfwSetErrorCallback([](int errorCode, const char* message) {
+        std::cout << "Error Code: " << errorCode << std::endl;
+        std::cout << "Message: " << message << std::endl;
+    });
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     _data->window = glfwCreateWindow(size.width, size.height, title.c_str(), NULL, NULL);
     if (_data->window == nullptr)

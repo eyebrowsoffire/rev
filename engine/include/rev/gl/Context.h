@@ -20,8 +20,26 @@ public:
     {
     }
 
+    ResourceContext(const ResourceContext &) = delete;
+    ResourceContext& operator=(const ResourceContext &) = delete;
+
+    ResourceContext(ResourceContext&& src)
+    : _resourceId(src._resourceId)
+    , _previousContext(src._previousContext)
+    {
+        sCurrentContext = this;
+        src._resourceId = 0;
+        src._previousContext = nullptr;
+    }
+    ResourceContext& operator=(ResourceContext&&) = delete;
+
     ~ResourceContext()
     {
+        if (_resourceId == 0)
+        {
+            return;
+        }
+
         GLuint previousResourceId =
             (_previousContext == nullptr) ? 0 : _previousContext->getResourceId();
         bindFunction(previousResourceId);

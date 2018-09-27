@@ -16,9 +16,10 @@ class BindBufferContext
 public:
     using ResourceContext<Buffer, enumTargetBindFunction<glBindBuffer, target>>::ResourceContext;
 
-    void bindData(gsl::span<const std::byte> data, GLenum usage)
+    template<typename ElementType>
+    void bindData(gsl::span<const ElementType> data, GLenum usage)
     {
-        glBufferData(target, data.size(), data.data(), usage);
+        glBufferData(target, data.size_bytes(), data.data(), usage);
     }
 };
 
