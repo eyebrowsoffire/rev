@@ -14,8 +14,22 @@ class Resource
     {
     }
 
+    Resource(const Resource&) = delete;
+    Resource(Resource&& src)
+    : _id(src._id)
+    {
+        src._id = 0;
+    }
+
+    Resource& operator=(const Resource&) = delete;
+    Resource& operator=(Resource&& src) = delete;
+
     ~Resource()
     {
+        if(_id == 0)
+        {
+            return;
+        }
         destroyFunction(_id);
     }
 

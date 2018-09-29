@@ -8,6 +8,7 @@ target_sources(revEngine PRIVATE
   include/rev/Camera.h
   include/rev/Engine.h
   include/rev/Environment.h
+  include/rev/Light.h
   include/rev/Model.h
   include/rev/Scene.h
   include/rev/SceneObject.h
@@ -27,6 +28,7 @@ target_sources(revEngine PRIVATE
   src/Camera.cpp
   src/Engine.cpp
   src/Environment.cpp
+  src/Light.cpp
   src/Model.cpp
   src/Scene.cpp
   src/SceneObject.cpp

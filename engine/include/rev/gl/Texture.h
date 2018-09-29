@@ -15,7 +15,7 @@ class TextureContext
     : public ResourceContext<Texture, enumTargetBindFunction<glBindTexture, target>>
 {
   public:
-    using ResourceContext::ResourceContext;
+    using ResourceContext<Texture, enumTargetBindFunction<glBindTexture, target>>::ResourceContext;
 
     void setParameter(GLenum name, GLint value)
     {

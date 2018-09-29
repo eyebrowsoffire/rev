@@ -4,8 +4,9 @@
 
 namespace rev
 {
-Model::Model(gsl::span<const glm::vec3> vertices, gsl::span<const glm::vec3> normals)
+Model::Model(gsl::span<const glm::vec3> vertices, gsl::span<const glm::vec3> normals, const glm::vec3& baseColor)
     : _vertexCount(vertices.size())
+    , _baseColor(baseColor)
 {
     VertexArrayContext vaoContext(_vao);
     {
@@ -28,6 +29,11 @@ Model::Model(gsl::span<const glm::vec3> vertices, gsl::span<const glm::vec3> nor
 }
 
 VertexArrayContext Model::getContext() { return VertexArrayContext(_vao); }
+
+const glm::vec3& Model::getBaseColor() const
+{
+    return _baseColor;
+}
 
 size_t Model::getVertexCount() const { return _vertexCount; }
 } // namespace rev

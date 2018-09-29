@@ -17,11 +17,11 @@ class FrameBufferContext
     : public ResourceContext<FrameBuffer, enumTargetBindFunction<glBindFramebuffer, Target>>
 {
   public:
-    using ResourceContext::ResourceContext;
+    using ResourceContext<FrameBuffer, enumTargetBindFunction<glBindFramebuffer, Target>>::ResourceContext;
 
-    void setBackingTexture(const Texture &texture)
+    void setTextureAttachment(GLenum attachment, const Texture &texture)
     {
-        glFramebufferTexture2D(Target, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.getId(), 0);
+        glFramebufferTexture2D(Target, attachment, GL_TEXTURE_2D, texture.getId(), 0);
     }
 
     GLint getAttachmentParameter(GLenum parameterName, GLenum attachment)
