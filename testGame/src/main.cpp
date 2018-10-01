@@ -104,7 +104,7 @@ int main(void)
   window->makeCurrent();
 
   auto sceneView = engine.createSceneView();
-  sceneView->setOutputSize({1280, 960});
+  sceneView->setOutputSize({1280, 720});
   auto scene = engine.createScene();
   sceneView->setScene(scene);
   window->setSceneView(sceneView);
@@ -124,7 +124,7 @@ int main(void)
 
   auto camera = sceneView->getCamera();
   camera->setTarget({0.0, 0.0, 0.0});
-  camera->setAspectRatio(4.0f/3.0f);
+  camera->setAspectRatio(1280.0f/720.0f);
   auto start = std::chrono::steady_clock::now();
   while (1)
   {

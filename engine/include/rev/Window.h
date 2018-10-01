@@ -21,6 +21,8 @@ public:
   void draw();
 
 private:
+  void updateAspect();
+  
   std::unique_ptr<WindowData> _data;
 };
 

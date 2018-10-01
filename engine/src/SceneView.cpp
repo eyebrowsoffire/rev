@@ -7,11 +7,9 @@
 
 #include <iostream>
 
-namespace rev
-{
+namespace rev {
 
-namespace
-{
+namespace {
 
 constexpr const char *kGeometryVertexShader = R"vertexShader(
         #version 330 core
@@ -93,219 +91,197 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
             float distanceMultiplier = 10.0f / dot(lightVector, lightVector);
             float angleMultiplier = dot(normalize(lightVector), normalize(normal));
 
-            vec3 ambientLight = vec3(0.05f) * baseColor;
+            vec3 ambientLight = vec3(0.02f) * baseColor;
             fragColor = vec4(ambientLight, 1.0f) + vec4(baseColor * lightBaseColor * distanceMultiplier * angleMultiplier, 1.0f);
         }
     )fragmentShader";
 
-Program createProgram(std::string_view vertexSource,
-                      std::string_view fragmentSource)
-{
-    VertexShader vShader;
-    vShader.setSource(vertexSource);
-    vShader.compile();
-    if (!vShader.getCompileStatus())
-    {
-        throw vShader.getCompileLog();
-    }
-
-    FragmentShader fShader;
-    fShader.setSource(fragmentSource);
-    fShader.compile();
-    if (!fShader.getCompileStatus())
-    {
-        throw fShader.getCompileLog();
-    }
-
-    Program program;
-    program.attachShader(vShader);
-    program.attachShader(fShader);
-    program.link();
-    if (!program.getLinkStatus())
-    {
-        throw program.getLinkLog();
-    }
-    return std::move(program);
-}
-
 constexpr glm::vec2 kFullScreenQuadVertices[] = {
-    {-1.0f, -1.0}, {-1.0f, 1.0f}, {1.0f, 1.0f},
+    {-1.0f, -1.0},  {-1.0f, 1.0f}, {1.0f, 1.0f},
 
-    {-1.0f, -1.0f},
-    {1.0f, 1.0f},
-    {1.0f, -1.0f}};
+    {-1.0f, -1.0f}, {1.0f, 1.0f},  {1.0f, -1.0f}};
 
 } // namespace
 
-SceneView::SceneView()
-    : _camera(std::make_shared<Camera>()),
-      _geometryProgram(
-          createProgram(kGeometryVertexShader, kGeometryFragmentShader)),
-      _lightingProgram(
-          createProgram(kDeferredVertexShader, kDeferredFragmentShader))
-{
-    {
-        ProgramContext programContext(_geometryProgram);
-        _model = _geometryProgram.getUniform<glm::mat4>("model");
-        _view = _geometryProgram.getUniform<glm::mat4>("view");
-        _projection = _geometryProgram.getUniform<glm::mat4>("projection");
-        _faceBaseColor = _geometryProgram.getUniform<glm::vec3>("faceColor");
-    }
+SceneView::SceneView() : _camera(std::make_shared<Camera>()) {
+  _geometryProgram.buildWithSource(kGeometryVertexShader,
+                                   kGeometryFragmentShader);
+  _lightingProgram.buildWithSource(kDeferredVertexShader,
+                                   kDeferredFragmentShader);
+  {
+    ProgramContext programContext(_geometryProgram);
+    _model = _geometryProgram.getUniform<glm::mat4>("model");
+    _view = _geometryProgram.getUniform<glm::mat4>("view");
+    _projection = _geometryProgram.getUniform<glm::mat4>("projection");
+    _faceBaseColor = _geometryProgram.getUniform<glm::vec3>("faceColor");
+  }
 
-    {
-        ProgramContext programContext(_lightingProgram);
-        _lightPosition = _lightingProgram.getUniform<glm::vec3>("lightPosition");
-        _lightBaseColor = _lightingProgram.getUniform<glm::vec3>("lightBaseColor");
+  {
+    ProgramContext programContext(_lightingProgram);
+    _lightPosition = _lightingProgram.getUniform<glm::vec3>("lightPosition");
+    _lightBaseColor = _lightingProgram.getUniform<glm::vec3>("lightBaseColor");
 
-        _lightingProgram.getUniform<GLint>("normals").set(0);
-        _lightingProgram.getUniform<GLint>("materialBaseColor").set(1);
-        _lightingProgram.getUniform<GLint>("fragPosition").set(2);
-    }
+    _lightingProgram.getUniform<GLint>("normals").set(0);
+    _lightingProgram.getUniform<GLint>("materialBaseColor").set(1);
+    _lightingProgram.getUniform<GLint>("fragPosition").set(2);
+  }
 
+  {
     ReadWriteFrameBufferContext fbContext(_deferredFramebuffer);
     {
-        Texture2DContext texContext(_depthBuffer);
-        texContext.setImage(0, GL_DEPTH_COMPONENT, _outputSize.width, _outputSize.height, 0,
-                            GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, nullptr);
-        texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        texContext.setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        texContext.setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      Texture2DContext texContext(_depthBuffer);
+      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      texContext.setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      texContext.setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        fbContext.setTextureAttachment(GL_DEPTH_ATTACHMENT, _depthBuffer);
+      fbContext.setTextureAttachment(GL_DEPTH_ATTACHMENT, _depthBuffer);
     }
 
     {
-        Texture2DContext texContext(_sceneNormals);
-        texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                            GL_RGB, GL_FLOAT, nullptr);
-        texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT0, _sceneNormals);
+      Texture2DContext texContext(_sceneNormals);
+      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT0, _sceneNormals);
     }
 
     {
-        Texture2DContext texContext(_sceneBaseColor);
-        texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                            GL_RGB, GL_FLOAT, nullptr);
-        texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT1, _sceneBaseColor);
+      Texture2DContext texContext(_sceneBaseColor);
+      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT1, _sceneBaseColor);
     }
 
     {
-        Texture2DContext texContext(_scenePosition);
-        texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                            GL_RGB, GL_FLOAT, nullptr);
-        texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT2, _scenePosition);
+      Texture2DContext texContext(_scenePosition);
+      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT2, _scenePosition);
     }
 
     GLenum attachments[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
                             GL_COLOR_ATTACHMENT2};
 
     glDrawBuffers(sizeof(attachments) / sizeof(GLenum), attachments);
+  }
 
-    VertexArrayContext vaoContext(_fullScreenVao);
-    ArrayBufferContext bufferContext(_fullScreenVertexBuffer);
+  {
+    ReadWriteFrameBufferContext fbContext(_outputFramebuffer);
+    Texture2DContext texContext(_outputTexture);
 
-    bufferContext.bindData(gsl::span<const glm::vec2>(kFullScreenQuadVertices),
-                           GL_STATIC_DRAW);
+    texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT0, _outputTexture);
+  }
+  VertexArrayContext vaoContext(_fullScreenVao);
+  ArrayBufferContext bufferContext(_fullScreenVertexBuffer);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
+  bufferContext.bindData(gsl::span<const glm::vec2>(kFullScreenQuadVertices),
+                         GL_STATIC_DRAW);
+
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
 }
 
-void SceneView::setScene(std::shared_ptr<Scene> scene)
-{
-    _scene = std::move(scene);
+void SceneView::setScene(std::shared_ptr<Scene> scene) {
+  _scene = std::move(scene);
 }
 
-void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize)
-{
-    if (_outputSize.width == outputSize.width &&
-        _outputSize.height == outputSize.height)
-    {
-        return;
-    }
-    _outputSize = outputSize;
+void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize) {
+  if (_outputSize.width == outputSize.width &&
+      _outputSize.height == outputSize.height) {
+    return;
+  }
+  _outputSize = outputSize;
 
-    {
-        Texture2DContext texContext(_depthBuffer);
-        texContext.setImage(0, GL_DEPTH_COMPONENT, _outputSize.width, _outputSize.height, 0,
-                            GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, nullptr);
-    }
+  {
+    Texture2DContext texContext(_depthBuffer);
+    texContext.setImage(0, GL_DEPTH_COMPONENT, _outputSize.width,
+                        _outputSize.height, 0, GL_DEPTH_COMPONENT,
+                        GL_UNSIGNED_BYTE, nullptr);
+  }
 
-    {
-        Texture2DContext texContext(_sceneNormals);
-        texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                            GL_RGB, GL_FLOAT, nullptr);
-    }
+  {
+    Texture2DContext texContext(_sceneNormals);
+    texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
+                        GL_RGB, GL_FLOAT, nullptr);
+  }
 
-    {
-        Texture2DContext texContext(_sceneBaseColor);
-        texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                            GL_RGB, GL_FLOAT, nullptr);
-    }
+  {
+    Texture2DContext texContext(_sceneBaseColor);
+    texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
+                        GL_RGB, GL_FLOAT, nullptr);
+  }
 
-    {
-        Texture2DContext texContext(_scenePosition);
-        texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                            GL_RGB, GL_FLOAT, nullptr);
-    }
+  {
+    Texture2DContext texContext(_scenePosition);
+    texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
+                        GL_RGB, GL_FLOAT, nullptr);
+  }
+
+  {
+    Texture2DContext texContext(_outputTexture);
+    texContext.setImage(0, GL_SRGB8_ALPHA8, _outputSize.width,
+                        _outputSize.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                        nullptr);
+  }
+}
+
+const RectSize<GLsizei> &SceneView::getOutputSize() const {
+  return _outputSize;
 }
 
 const std::shared_ptr<Camera> &SceneView::getCamera() const { return _camera; }
 
-void SceneView::render()
-{
-    if (!_scene)
-    {
-        return;
-    }
+void SceneView::render() {
+  if (!_scene) {
+    return;
+  }
 
-    // Geometry pass
-    {
-        ProgramContext programContext(_geometryProgram);
-        ReadWriteFrameBufferContext fbContext(_deferredFramebuffer);
+  // Geometry pass
+  {
+    ProgramContext programContext(_geometryProgram);
+    ReadWriteFrameBufferContext fbContext(_deferredFramebuffer);
 
-        glViewport(0, 0, _outputSize.width, _outputSize.height);
+    glViewport(0, 0, _outputSize.width, _outputSize.height);
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
 
-        _view.set(_camera->getViewMatrix());
-        _projection.set(_camera->getProjectionMatrix());
+    _view.set(_camera->getViewMatrix());
+    _projection.set(_camera->getProjectionMatrix());
 
-        _scene->renderAllObjects(_model, _faceBaseColor);
-    }
+    _scene->renderAllObjects(_model, _faceBaseColor);
+  }
 
-    // Lighting pass
-    {
-        ProgramContext programContext(_lightingProgram);
-        glViewport(0, 0, _outputSize.width, _outputSize.height);
+  // Lighting pass
+  {
+    ProgramContext programContext(_lightingProgram);
+    ReadWriteFrameBufferContext fbContext(_outputFramebuffer);
+    glViewport(0, 0, _outputSize.width, _outputSize.height);
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, _sceneNormals.getId());
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, _sceneBaseColor.getId());
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, _scenePosition.getId());
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _sceneNormals.getId());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _sceneBaseColor.getId());
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _scenePosition.getId());
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
 
-        VertexArrayContext vaoContext(_fullScreenVao);
+    VertexArrayContext vaoContext(_fullScreenVao);
 
-        _scene->renderAllLights(_lightPosition, _lightBaseColor);
-    }
+    _scene->renderAllLights(_lightPosition, _lightBaseColor);
+  }
 }
+
+const Texture &SceneView::getOutputTexture() const { return _outputTexture; }
 
 } // namespace rev
