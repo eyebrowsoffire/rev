@@ -5,7 +5,7 @@
 namespace rev
 {
 
-SceneObject::SceneObject(std::shared_ptr<Model> model)
+SceneObject::SceneObject(std::shared_ptr<IModel> model)
     : _model(std::move(model)), 
       _transform(glm::mat4()) {}
 

@@ -24,5 +24,6 @@ public:
 };
 
 using ArrayBufferContext = BindBufferContext<GL_ARRAY_BUFFER>;
+using ElementBufferContext = BindBufferContext<GL_ELEMENT_ARRAY_BUFFER>;
 
 } // namespace Twitch::GraphicsUtility

@@ -1,12 +1,12 @@
 #include "rev/Scene.h"
 
 #include "rev/Light.h"
-#include "rev/Model.h"
+#include "rev/IModel.h"
 #include "rev/SceneObject.h"
 
 namespace rev
 {
-std::shared_ptr<SceneObject> Scene::addObject(std::shared_ptr<Model> model)
+std::shared_ptr<SceneObject> Scene::addObject(std::shared_ptr<IModel> model)
 {
     auto object = std::make_shared<SceneObject>(model);
     _objectsByModel[model].insert(object);
@@ -26,14 +26,14 @@ void Scene::renderAllObjects(Uniform<glm::mat4> &transformUniform,
     for (const auto &pair : _objectsByModel)
     {
         auto &model = pair.first;
-        VertexArrayContext modelContext = model->getContext();
+        VertexArrayContext modelContext = model->getVertexArrayContext();
 
-        baseColor.set(model->getBaseColor());
+        baseColor.set({1.0f, 1.0f, 1.0f});
 
         for (const auto &object : pair.second)
         {
             transformUniform.set(object->getTransform());
-            glDrawArrays(GL_TRIANGLES, 0, model->getVertexCount());
+            model->draw();
         }
     }
 }

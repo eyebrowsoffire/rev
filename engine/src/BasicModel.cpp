@@ -1,12 +1,11 @@
-#include "rev/Model.h"
+#include "rev/BasicModel.h"
 
 #include <OpenGL/gl3.h>
 
 namespace rev
 {
-Model::Model(gsl::span<const glm::vec3> vertices, gsl::span<const glm::vec3> normals, const glm::vec3& baseColor)
+BasicModel::BasicModel(gsl::span<const glm::vec3> vertices, gsl::span<const glm::vec3> normals)
     : _vertexCount(vertices.size())
-    , _baseColor(baseColor)
 {
     VertexArrayContext vaoContext(_vao);
     {
@@ -28,12 +27,10 @@ Model::Model(gsl::span<const glm::vec3> vertices, gsl::span<const glm::vec3> nor
     }
 }
 
-VertexArrayContext Model::getContext() { return VertexArrayContext(_vao); }
+VertexArrayContext BasicModel::getVertexArrayContext() { return VertexArrayContext(_vao); }
 
-const glm::vec3& Model::getBaseColor() const
+void BasicModel::draw()
 {
-    return _baseColor;
+    glDrawArrays(GL_TRIANGLES, 0, _vertexCount);
 }
-
-size_t Model::getVertexCount() const { return _vertexCount; }
 } // namespace rev
