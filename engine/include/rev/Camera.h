@@ -11,6 +11,7 @@ class Camera
     Camera();
 
     void setPosition(const glm::vec3 &position);
+    const glm::vec3 &getPosition() const;
     void setTarget(const glm::vec3 &target);
     void setUpVector(const glm::vec3 &target);
 

@@ -74,6 +74,7 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
 
         uniform vec3 lightPosition;
         uniform vec3 lightBaseColor;
+        uniform vec3 camPosition;
 
         uniform sampler2D normals;
         uniform sampler2D materialBaseColor;
@@ -88,11 +89,22 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
             vec3 fragmentPosition = texture(fragPosition, texCoord).rgb;
             vec3 lightVector = lightPosition - fragmentPosition;
 
-            float distanceMultiplier = 10.0f / dot(lightVector, lightVector);
-            float angleMultiplier = dot(normalize(lightVector), normalize(normal));
+            float attenuation = 1.0f / (1.0f + 0.01 * dot(lightVector, lightVector));
+            float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
+
+            float shininess = 100.0f;
+
+            vec3 eyeVector = normalize(camPosition - fragmentPosition);
+            vec3 halfwayVector = normalize(eyeVector + normalize(lightVector));
+            float specularComponent = max(dot(halfwayVector, normal), 0.0f);
 
             vec3 ambientLight = vec3(0.02f) * baseColor;
-            fragColor = vec4(ambientLight, 1.0f) + vec4(baseColor * lightBaseColor * distanceMultiplier * angleMultiplier, 1.0f);
+            vec3 diffuseLight = baseColor * lightBaseColor * attenuation * angleMultiplier;
+            vec3 specularLight = lightBaseColor * pow(specularComponent, shininess);
+
+            vec3 totalLight = ambientLight + diffuseLight + specularLight;
+            
+            fragColor = vec4(totalLight, 1.0f);
         }
     )fragmentShader";
 
@@ -120,6 +132,7 @@ SceneView::SceneView() : _camera(std::make_shared<Camera>()) {
     ProgramContext programContext(_lightingProgram);
     _lightPosition = _lightingProgram.getUniform<glm::vec3>("lightPosition");
     _lightBaseColor = _lightingProgram.getUniform<glm::vec3>("lightBaseColor");
+    _camPosition = _lightingProgram.getUniform<glm::vec3>("camPosition");
 
     _lightingProgram.getUniform<GLint>("normals").set(0);
     _lightingProgram.getUniform<GLint>("materialBaseColor").set(1);
@@ -260,6 +273,8 @@ void SceneView::render() {
   {
     ProgramContext programContext(_lightingProgram);
     ReadWriteFrameBufferContext fbContext(_outputFramebuffer);
+
+    _camPosition.set(_camera->getPosition());
     glViewport(0, 0, _outputSize.width, _outputSize.height);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

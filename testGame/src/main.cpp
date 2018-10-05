@@ -91,9 +91,9 @@ void updateCamera(rev::Camera &camera, DurationType elapsedTime)
 {
   using FloatSeconds = std::chrono::duration<float>;
 
-  constexpr float radius = 30.0f;
+  constexpr float radius = 2.0f;
   float t = FloatSeconds(elapsedTime).count();
-  float y = 15.0f * sin(t / 4.0f);
+  float y = 1.0f * sin(t / 4.0f);
   float x = radius * cos(t);
   float z = radius * sin(t);
 
@@ -122,16 +122,16 @@ int main(void)
   // gsl::span<const glm::vec3>(normals)); auto cubeObject =
   // scene->addObject(cubeModel);
 
-  rev::ObjFile teapotFile("/Users/jacksongardner/Desktop/teapot.obj");
+  rev::ObjFile teapotFile("/Users/jacksongardner/Desktop/teapot-small.obj");
   auto teapotModel = teapotFile.createIndexedModel();
   auto teapotObject = scene->addObject(teapotModel);
 
   auto yellowLight = scene->addLight();
-  yellowLight->setPosition(glm::vec3(15.0f, 15.0f, 15.0f));
+  yellowLight->setPosition(glm::vec3(4.0f, 3.0f, 3.0f));
   yellowLight->setBaseColor(glm::vec3(1.0f, 1.0f, 0.8f));
 
   auto blueLight = scene->addLight();
-  blueLight->setPosition(glm::vec3(-15.0f, -20.0f, 15.0f));
+  blueLight->setPosition(glm::vec3(-1.5f, -2.0f, 1.5f));
   blueLight->setBaseColor(glm::vec3(0.2f, 0.2f, 1.0f));
 
   auto camera = sceneView->getCamera();

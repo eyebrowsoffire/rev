@@ -56,5 +56,6 @@ private:
 
   Uniform<glm::vec3> _lightPosition;
   Uniform<glm::vec3> _lightBaseColor;
+  Uniform<glm::vec3> _camPosition;
 };
 } // namespace rev

@@ -22,6 +22,11 @@ void Camera::setPosition(const glm::vec3 &position)
     _viewDirty = true;
 }
 
+const glm::vec3 &Camera::getPosition() const
+{
+    return _position;
+}
+
 void Camera::setTarget(const glm::vec3 &target)
 {
     _target = target;
