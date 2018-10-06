@@ -2,6 +2,7 @@
 
 #include "rev/Camera.h"
 #include "rev/Scene.h"
+#include "rev/RenderStage.h"
 
 #include <OpenGL/gl3.h>
 
@@ -29,11 +30,8 @@ constexpr const char *kGeometryVertexShader = R"vertexShader(
             vec4 worldSpacePosition = model * vec4(vPosition, 1.0f);
             gl_Position = projection * view * worldSpacePosition;
 
-            vec4 worldSpaceNormalTarget = model * vec4(vPosition + vNormal, 1.0f);
-            worldSpacePosition /= worldSpacePosition.w;
-            worldSpaceNormalTarget /= worldSpaceNormalTarget.w;
-
-            fNormal = normalize((worldSpaceNormalTarget - worldSpacePosition).xyz);
+            vec4 worldSpaceNormal = model * vec4(vNormal, 0.0f);
+            fNormal = normalize(worldSpaceNormal.xyz);
             fPosition = worldSpacePosition.xyz;
         }
     )vertexShader";
@@ -98,7 +96,7 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
             float attenuation = 1.0f / (1.0f + 0.01 * dot(lightVector, lightVector));
             float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
 
-            float shininess = 20.0f;
+            float shininess = 200.0f;
 
             vec3 eyeVector = normalize(camPosition - fragmentPosition);
             vec3 halfwayVector = normalize(eyeVector + normalize(lightVector));
@@ -146,45 +144,6 @@ SceneView::SceneView() : _camera(std::make_shared<Camera>()) {
   }
 
   {
-    ReadWriteFrameBufferContext fbContext(_deferredFramebuffer);
-    {
-      Texture2DContext texContext(_depthBuffer);
-      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      texContext.setParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      texContext.setParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-      fbContext.setTextureAttachment(GL_DEPTH_ATTACHMENT, _depthBuffer);
-    }
-
-    {
-      Texture2DContext texContext(_sceneNormals);
-      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT0, _sceneNormals);
-    }
-
-    {
-      Texture2DContext texContext(_sceneBaseColor);
-      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT1, _sceneBaseColor);
-    }
-
-    {
-      Texture2DContext texContext(_scenePosition);
-      texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT2, _scenePosition);
-    }
-
-    GLenum attachments[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
-                            GL_COLOR_ATTACHMENT2};
-
-    glDrawBuffers(sizeof(attachments) / sizeof(GLenum), attachments);
-  }
-
-  {
     ReadWriteFrameBufferContext fbContext(_outputFramebuffer);
     Texture2DContext texContext(_outputTexture);
 
@@ -212,31 +171,7 @@ void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize) {
     return;
   }
   _outputSize = outputSize;
-
-  {
-    Texture2DContext texContext(_depthBuffer);
-    texContext.setImage(0, GL_DEPTH_COMPONENT, _outputSize.width,
-                        _outputSize.height, 0, GL_DEPTH_COMPONENT,
-                        GL_UNSIGNED_BYTE, nullptr);
-  }
-
-  {
-    Texture2DContext texContext(_sceneNormals);
-    texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                        GL_RGB, GL_FLOAT, nullptr);
-  }
-
-  {
-    Texture2DContext texContext(_sceneBaseColor);
-    texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                        GL_RGB, GL_FLOAT, nullptr);
-  }
-
-  {
-    Texture2DContext texContext(_scenePosition);
-    texContext.setImage(0, GL_RGB16F, _outputSize.width, _outputSize.height, 0,
-                        GL_RGB, GL_FLOAT, nullptr);
-  }
+  _geometryStage.setOutputSize(outputSize);
 
   {
     Texture2DContext texContext(_outputTexture);
@@ -260,7 +195,7 @@ void SceneView::render() {
   // Geometry pass
   {
     ProgramContext programContext(_geometryProgram);
-    ReadWriteFrameBufferContext fbContext(_deferredFramebuffer);
+    auto fbContext = _geometryStage.getRenderContext();
 
     glViewport(0, 0, _outputSize.width, _outputSize.height);
 
@@ -288,11 +223,11 @@ void SceneView::render() {
     glDisable(GL_DEPTH_TEST);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _sceneNormals.getId());
+    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<WorldSpaceNormalProperty>().getId());
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _sceneBaseColor.getId());
+    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<BaseColorProperty>().getId());
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _scenePosition.getId());
+    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<WorldSpacePositionProperty>().getId());
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);

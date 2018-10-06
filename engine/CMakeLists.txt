@@ -13,10 +13,12 @@ target_sources(revEngine PRIVATE
   include/rev/IndexedModel.h
   include/rev/Light.h
   include/rev/ObjFile.h
+  include/rev/RenderStage.h
   include/rev/Scene.h
   include/rev/SceneObject.h
   include/rev/SceneView.h
   include/rev/Types.h
+  include/rev/Utilities.h
   include/rev/Window.h
 
   include/rev/gl/Buffer.h

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rev/Camera.h"
+#include "rev/RenderStage.h"
 #include "rev/Types.h"
 #include "rev/gl/Buffer.h"
 #include "rev/gl/FrameBuffer.h"
@@ -37,11 +38,26 @@ private:
   Program _geometryProgram;
   Program _lightingProgram;
 
-  FrameBuffer _deferredFramebuffer;
-  Texture _depthBuffer;
-  Texture _sceneBaseColor;
-  Texture _sceneNormals;
-  Texture _scenePosition;
+  struct BaseColorProperty
+  {
+  };
+  struct WorldSpaceNormalProperty
+  {
+  };
+  struct WorldSpacePositionProperty
+  {
+  };
+  struct DepthProperty
+  {
+  };
+
+  using WorldSpaceNormalAttachment = RenderStageAttachment<WorldSpaceNormalProperty, GL_COLOR_ATTACHMENT0, GL_RGB16F, GL_RGB, GL_FLOAT>;
+  using BaseColorAttachment = RenderStageAttachment<BaseColorProperty, GL_COLOR_ATTACHMENT1, GL_RGB16F, GL_RGB, GL_FLOAT>;
+  using WorldSpacePositionAttachment = RenderStageAttachment<WorldSpacePositionProperty, GL_COLOR_ATTACHMENT2, GL_RGB16F, GL_RGB, GL_FLOAT>;
+  using DepthAttachment = RenderStageAttachment<DepthProperty, GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE>;
+
+  using GeometryStage = RenderStage<WorldSpaceNormalAttachment, BaseColorAttachment, WorldSpacePositionAttachment, DepthAttachment>;
+  GeometryStage _geometryStage;
 
   FrameBuffer _outputFramebuffer;
   Texture _outputTexture;

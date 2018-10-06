@@ -117,7 +117,7 @@ int main(void) {
   auto cubeModel = std::make_shared<rev::BasicModel>(
       verticesSpan, gsl::span<const glm::vec3>(normals));
   auto cubeObject = scene->addObject(cubeModel);
-  cubeObject->scale(glm::vec3(6.0f));
+  cubeObject->scale(20.0f);
 
   rev::ObjFile teapotFile("/Users/jacksongardner/Desktop/teapot-small.obj");
   auto teapotModel = teapotFile.createIndexedModel();
