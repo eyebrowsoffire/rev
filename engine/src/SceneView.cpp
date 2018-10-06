@@ -26,9 +26,15 @@ constexpr const char *kGeometryVertexShader = R"vertexShader(
 
         void main()
         {
-            gl_Position = projection * view * model * vec4(vPosition, 1.0f);
-            fNormal = vNormal;
-            fPosition = vPosition;
+            vec4 worldSpacePosition = model * vec4(vPosition, 1.0f);
+            gl_Position = projection * view * worldSpacePosition;
+
+            vec4 worldSpaceNormalTarget = model * vec4(vPosition + vNormal, 1.0f);
+            worldSpacePosition /= worldSpacePosition.w;
+            worldSpaceNormalTarget /= worldSpaceNormalTarget.w;
+
+            fNormal = normalize((worldSpaceNormalTarget - worldSpacePosition).xyz);
+            fPosition = worldSpacePosition.xyz;
         }
     )vertexShader";
 
@@ -92,17 +98,17 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
             float attenuation = 1.0f / (1.0f + 0.01 * dot(lightVector, lightVector));
             float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
 
-            float shininess = 100.0f;
+            float shininess = 20.0f;
 
             vec3 eyeVector = normalize(camPosition - fragmentPosition);
             vec3 halfwayVector = normalize(eyeVector + normalize(lightVector));
             float specularComponent = max(dot(halfwayVector, normal), 0.0f);
 
-            vec3 ambientLight = vec3(0.02f) * baseColor;
+            vec3 ambientLight = vec3(0.01f) * baseColor;
             vec3 diffuseLight = baseColor * lightBaseColor * attenuation * angleMultiplier;
             vec3 specularLight = lightBaseColor * pow(specularComponent, shininess);
 
-            vec3 totalLight = ambientLight + diffuseLight + specularLight;
+            vec3 totalLight = diffuseLight + specularLight + ambientLight;
             
             fragColor = vec4(totalLight, 1.0f);
         }

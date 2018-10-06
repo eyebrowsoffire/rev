@@ -16,4 +16,9 @@ void SceneObject::translate(const glm::vec3 &tVector)
     _transform = glm::translate(_transform, tVector);
 }
 
+void SceneObject::scale(const glm::vec3 &factor)
+{
+    _transform = glm::scale(_transform, factor);
+}
+
 } // namespace rev

@@ -5,6 +5,7 @@
 #include <rev/Light.h>
 #include <rev/ObjFile.h>
 #include <rev/Scene.h>
+#include <rev/SceneObject.h>
 #include <rev/SceneView.h>
 #include <rev/Window.h>
 
@@ -13,8 +14,7 @@
 #include <chrono>
 #include <cmath>
 
-namespace
-{
+namespace {
 constexpr glm::vec3 kCubeVertices[] = {
     // Front face
     {-1.0, -1.0, 1.0},
@@ -65,14 +65,12 @@ constexpr glm::vec3 kCubeVertices[] = {
     {1.0, -1.0, 1.0}};
 
 std::vector<glm::vec3>
-buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
-{
+buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices) {
   Expects(vertices.size() % 3 == 0);
   size_t primitiveCount = vertices.size() / 3;
   std::vector<glm::vec3> normals;
   for (size_t primitiveIndex = 0; primitiveIndex < primitiveCount;
-       primitiveIndex++)
-  {
+       primitiveIndex++) {
     size_t vertexIndex = primitiveIndex * 3;
     glm::vec3 edge1 = vertices[vertexIndex] - vertices[vertexIndex + 1];
     glm::vec3 edge2 = vertices[vertexIndex + 2] - vertices[vertexIndex + 1];
@@ -87,8 +85,7 @@ buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
 }
 
 template <typename DurationType>
-void updateCamera(rev::Camera &camera, DurationType elapsedTime)
-{
+void updateCamera(rev::Camera &camera, DurationType elapsedTime) {
   using FloatSeconds = std::chrono::duration<float>;
 
   constexpr float radius = 2.0f;
@@ -101,15 +98,14 @@ void updateCamera(rev::Camera &camera, DurationType elapsedTime)
 }
 } // namespace
 
-int main(void)
-{
+int main(void) {
   rev::Engine engine;
   auto window = engine.createWindow("Test Game", {1280, 720});
   window->makeCurrent();
 
   auto sceneView = engine.createSceneView();
-  // sceneView->setOutputSize({320, 180});
-  sceneView->setOutputSize({1280, 720});
+  sceneView->setOutputSize({320, 180});
+  // sceneView->setOutputSize({1280, 720});
 
   auto scene = engine.createScene();
   sceneView->setScene(scene);
@@ -118,13 +114,15 @@ int main(void)
   auto verticesSpan = gsl::span<const glm::vec3>(kCubeVertices);
   auto normals = buildFlatNormalsForVertices(verticesSpan);
 
-  // auto cubeModel = std::make_shared<rev::BasicModel>(verticesSpan,
-  // gsl::span<const glm::vec3>(normals)); auto cubeObject =
-  // scene->addObject(cubeModel);
+  auto cubeModel = std::make_shared<rev::BasicModel>(
+      verticesSpan, gsl::span<const glm::vec3>(normals));
+  auto cubeObject = scene->addObject(cubeModel);
+  cubeObject->scale(glm::vec3(6.0f));
 
   rev::ObjFile teapotFile("/Users/jacksongardner/Desktop/teapot-small.obj");
   auto teapotModel = teapotFile.createIndexedModel();
   auto teapotObject = scene->addObject(teapotModel);
+  teapotObject->translate(glm::vec3(0.0f, -1.0f, 0.0f));
 
   auto yellowLight = scene->addLight();
   yellowLight->setPosition(glm::vec3(4.0f, 3.0f, 3.0f));
@@ -134,12 +132,15 @@ int main(void)
   blueLight->setPosition(glm::vec3(-1.5f, -2.0f, 1.5f));
   blueLight->setBaseColor(glm::vec3(0.2f, 0.2f, 1.0f));
 
+  auto orangeLight = scene->addLight();
+  orangeLight->setPosition(glm::vec3(3.0f, 0.75f, -2.5f));
+  orangeLight->setBaseColor(glm::vec3(1.0f, 0.3f, 0.0f));
+
   auto camera = sceneView->getCamera();
   camera->setTarget({0.0, 0.0, 0.0});
   camera->setAspectRatio(1280.0f / 720.0f);
   auto start = std::chrono::steady_clock::now();
-  while (1)
-  {
+  while (1) {
     auto elapsedTime = std::chrono::steady_clock::now() - start;
     updateCamera(*camera, elapsedTime);
 
