@@ -1,8 +1,7 @@
 #include "rev/Window.h"
 
+#include "rev/gl/OpenGL.h"
 #include "rev/SceneView.h"
-
-#include <GLFW/glfw3.h>
 
 #include <iostream>
 

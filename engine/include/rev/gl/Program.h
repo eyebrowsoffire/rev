@@ -4,7 +4,6 @@
 #include "rev/gl/Resource.h"
 #include "rev/gl/Uniform.h"
 
-#include <OpenGL/gl3.h>
 #include <gsl/gsl_assert>
 #include <string>
 

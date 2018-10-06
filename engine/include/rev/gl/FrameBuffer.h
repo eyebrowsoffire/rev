@@ -4,7 +4,6 @@
 #include "rev/gl/Resource.h"
 #include "rev/gl/Texture.h"
 
-#include <OpenGL/gl3.h>
 #include <string>
 
 namespace rev

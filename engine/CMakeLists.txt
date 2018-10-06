@@ -24,6 +24,7 @@ target_sources(revEngine PRIVATE
   include/rev/gl/Buffer.h
   include/rev/gl/Context.h
   include/rev/gl/FrameBuffer.h
+  include/rev/gl/OpenGL.h
   include/rev/gl/Program.h
   include/rev/gl/Resource.h
   include/rev/gl/Texture.h

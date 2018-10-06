@@ -4,8 +4,6 @@
 #include "rev/Scene.h"
 #include "rev/RenderStage.h"
 
-#include <OpenGL/gl3.h>
-
 #include <iostream>
 
 namespace rev {

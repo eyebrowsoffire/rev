@@ -1,6 +1,6 @@
 #pragma once
 
-#include <OpenGL/gl3.h>
+#include "rev/gl/OpenGL.h"
 
 namespace rev
 {
