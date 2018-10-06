@@ -143,14 +143,6 @@ SceneView::SceneView() : _camera(std::make_shared<Camera>()) {
     _lightingProgram.getUniform<GLint>("fragPosition").set(2);
   }
 
-  {
-    ReadWriteFrameBufferContext fbContext(_outputFramebuffer);
-    Texture2DContext texContext(_outputTexture);
-
-    texContext.setParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    texContext.setParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    fbContext.setTextureAttachment(GL_COLOR_ATTACHMENT0, _outputTexture);
-  }
   VertexArrayContext vaoContext(_fullScreenVao);
   ArrayBufferContext bufferContext(_fullScreenVertexBuffer);
 
@@ -172,13 +164,7 @@ void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize) {
   }
   _outputSize = outputSize;
   _geometryStage.setOutputSize(outputSize);
-
-  {
-    Texture2DContext texContext(_outputTexture);
-    texContext.setImage(0, GL_SRGB8_ALPHA8, _outputSize.width,
-                        _outputSize.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                        nullptr);
-  }
+  _lightingStage.setOutputSize(outputSize);
 }
 
 const RectSize<GLsizei> &SceneView::getOutputSize() const {
@@ -213,7 +199,7 @@ void SceneView::render() {
   // Lighting pass
   {
     ProgramContext programContext(_lightingProgram);
-    ReadWriteFrameBufferContext fbContext(_outputFramebuffer);
+    auto fbContext = _lightingStage.getRenderContext();
 
     _camPosition.set(_camera->getPosition());
     glViewport(0, 0, _outputSize.width, _outputSize.height);
@@ -238,6 +224,6 @@ void SceneView::render() {
   }
 }
 
-const Texture &SceneView::getOutputTexture() const { return _outputTexture; }
+const Texture &SceneView::getOutputTexture() const { return _lightingStage.getOutputTexture<OutputColorProperty>(); }
 
 } // namespace rev

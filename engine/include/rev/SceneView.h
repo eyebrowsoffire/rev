@@ -59,8 +59,12 @@ private:
   using GeometryStage = RenderStage<WorldSpaceNormalAttachment, BaseColorAttachment, WorldSpacePositionAttachment, DepthAttachment>;
   GeometryStage _geometryStage;
 
-  FrameBuffer _outputFramebuffer;
-  Texture _outputTexture;
+  struct OutputColorProperty
+  {
+  };
+  using OutputColorAttachment = RenderStageAttachment<OutputColorProperty, GL_COLOR_ATTACHMENT0, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE>;
+  using LightingStage = RenderStage<OutputColorAttachment>;
+  LightingStage _lightingStage;
 
   VertexArray _fullScreenVao;
   Buffer _fullScreenVertexBuffer;
