@@ -1,14 +1,21 @@
 #pragma once
 
+#include "rev/Types.h"
+
 #include <memory>
+#include <vector>
 
 namespace rev
 {
-class Actor;
+class IActor;
 
 class Environment
 {
-public:
+  public:
+    Environment();
+
+    void addActor(std::shared_ptr<IActor> actor);
+
     void play();
     void pause();
 
@@ -16,8 +23,16 @@ public:
 
     void kill();
     bool isDead() const;
-private:
-    bool _dead = false;
-    bool _paused = false;
+
+    Duration getTotalElapsedTime() const;
+
+  private:
+    TimePoint _lastTick;
+    Duration _elapsedTime;
+
+    std::vector<std::shared_ptr<IActor>> _actors;
+
+    bool _dead;
+    bool _paused;
 };
 } // namespace rev

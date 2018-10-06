@@ -4,11 +4,11 @@ conan_basic_setup()
 add_library(revEngine STATIC)
 
 target_sources(revEngine PRIVATE
-  include/rev/Actor.h
   include/rev/BasicModel.h
   include/rev/Camera.h
   include/rev/Engine.h
   include/rev/Environment.h
+  include/rev/IActor.h
   include/rev/IModel.h
   include/rev/IndexedModel.h
   include/rev/Light.h

@@ -1,7 +1,12 @@
 #pragma once
 
+#include <chrono>
+
 namespace rev
 {
+
+using TimePoint = std::chrono::steady_clock::time_point;
+using Duration = std::chrono::steady_clock::duration;
 
 template <typename ScalarType>
 struct Point

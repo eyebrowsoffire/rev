@@ -1,6 +1,8 @@
 #include <rev/BasicModel.h>
 #include <rev/Camera.h>
 #include <rev/Engine.h>
+#include <rev/Environment.h>
+#include <rev/IActor.h>
 #include <rev/IndexedModel.h>
 #include <rev/Light.h>
 #include <rev/ObjFile.h>
@@ -14,7 +16,8 @@
 #include <chrono>
 #include <cmath>
 
-namespace {
+namespace
+{
 constexpr glm::vec3 kCubeVertices[] = {
     // Front face
     {-1.0, -1.0, 1.0},
@@ -65,12 +68,14 @@ constexpr glm::vec3 kCubeVertices[] = {
     {1.0, -1.0, 1.0}};
 
 std::vector<glm::vec3>
-buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices) {
+buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
+{
   Expects(vertices.size() % 3 == 0);
   size_t primitiveCount = vertices.size() / 3;
   std::vector<glm::vec3> normals;
   for (size_t primitiveIndex = 0; primitiveIndex < primitiveCount;
-       primitiveIndex++) {
+       primitiveIndex++)
+  {
     size_t vertexIndex = primitiveIndex * 3;
     glm::vec3 edge1 = vertices[vertexIndex] - vertices[vertexIndex + 1];
     glm::vec3 edge2 = vertices[vertexIndex + 2] - vertices[vertexIndex + 1];
@@ -84,21 +89,40 @@ buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices) {
   return normals;
 }
 
-template <typename DurationType>
-void updateCamera(rev::Camera &camera, DurationType elapsedTime) {
-  using FloatSeconds = std::chrono::duration<float>;
+class CameraController : public rev::IActor
+{
+public:
+  CameraController(std::shared_ptr<rev::Camera> camera)
+  : _camera(std::move(camera))
+  {
+  }
 
-  constexpr float radius = 2.0f;
-  float t = FloatSeconds(elapsedTime).count();
-  float y = 1.0f * sin(t / 4.0f);
-  float x = radius * cos(t);
-  float z = radius * sin(t);
+  void tick(rev::Environment &environment, rev::Duration) override
+  {
+    using FloatSeconds = std::chrono::duration<float>;
 
-  camera.setPosition({x, y, z});
-}
+    constexpr float radius = 2.0f;
+    float t = FloatSeconds(environment.getTotalElapsedTime()).count();
+    
+    float y = 1.0f * sin(t / 4.0f);
+    float x = radius * cos(t);
+    float z = radius * sin(t);
+
+    _camera->setPosition({x, y, z});
+  }
+
+  void kill(rev::Environment &) override
+  {
+  }
+
+private:
+  std::shared_ptr<rev::Camera> _camera;
+};
+
 } // namespace
 
-int main(void) {
+int main(void)
+{
   rev::Engine engine;
   auto window = engine.createWindow("Test Game", {1280, 720});
   window->makeCurrent();
@@ -139,11 +163,14 @@ int main(void) {
   auto camera = sceneView->getCamera();
   camera->setTarget({0.0, 0.0, 0.0});
   camera->setAspectRatio(1280.0f / 720.0f);
-  auto start = std::chrono::steady_clock::now();
-  while (1) {
-    auto elapsedTime = std::chrono::steady_clock::now() - start;
-    updateCamera(*camera, elapsedTime);
 
+  auto cameraController = std::make_shared<CameraController>(std::move(camera));
+  auto environment = engine.createEnvironment();
+  environment->addActor(cameraController);
+  environment->play();
+
+  while (1)
+  {
     engine.update();
   }
   return 0;
