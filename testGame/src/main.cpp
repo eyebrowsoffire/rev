@@ -172,14 +172,20 @@ public:
     case rev::KeyboardKey::S:
       _zSpeed -= 1.0f;
       break;
+    case rev::KeyboardKey::A:
+      _xSpeed -= 1.0f;
+      break;
+    case rev::KeyboardKey::D:
+      _xSpeed += 1.0f;
+      break;
     default:
       return;
     }
   }
 
-  void keyReleased(rev::KeyboardKey key) override 
+  void keyReleased(rev::KeyboardKey key) override
   {
-        switch (key)
+    switch (key)
     {
     case rev::KeyboardKey::W:
       _zSpeed -= 1.0f;
@@ -187,40 +193,49 @@ public:
     case rev::KeyboardKey::S:
       _zSpeed += 1.0f;
       break;
+    case rev::KeyboardKey::A:
+      _xSpeed += 1.0f;
+      break;
+    case rev::KeyboardKey::D:
+      _xSpeed -= 1.0f;
+      break;
     default:
       return;
     }
   }
 
-  void tick(rev::Environment &, rev::Duration elapsedTime) override 
+  void tick(rev::Environment &, rev::Duration elapsedTime) override
   {
-    if(abs(_zSpeed) <= 0.01f)
+    if ((abs(_zSpeed) <= 0.01f) && (abs(_xSpeed) <= 0.01f))
     {
       return;
     }
 
     using FloatSeconds = std::chrono::duration<float>;
 
-    constexpr float speedFactor = 3.0f;
-    float zDistance = speedFactor * _zSpeed * static_cast<FloatSeconds>(elapsedTime).count();
+    glm::vec4 movementDirection = glm::vec4(_xSpeed, 0.0f, -_zSpeed, 0.0f);
+
+    movementDirection = glm::inverse(_camera->getViewMatrix()) * movementDirection;
+
+    glm::vec3 movementVector(movementDirection.x, movementDirection.y, movementDirection.z);
+    movementVector = glm::normalize(movementVector);
+
+    constexpr float speedFactor = 9.0f;
+    movementVector *= speedFactor * static_cast<FloatSeconds>(elapsedTime).count();
 
     auto position = _camera->getPosition();
     auto target = _camera->getTarget();
-    auto cameraVector = target - position;
-    
-    auto forwardVector = zDistance * glm::normalize(cameraVector);
-    _camera->setPosition(position + forwardVector);
-    _camera->setTarget(target + forwardVector);
+    _camera->setPosition(position + movementVector);
+    _camera->setTarget(target + movementVector);
   }
 
-  void kill(rev::Environment&) override
-  {
-  }
+  void kill(rev::Environment &) override {}
 
 private:
   std::shared_ptr<rev::Camera> _camera;
   rev::Point<double> _lastPosition{0.0, 0.0};
   float _zSpeed;
+  float _xSpeed;
 };
 
 } // namespace
