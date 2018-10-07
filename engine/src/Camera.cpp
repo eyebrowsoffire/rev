@@ -33,6 +33,11 @@ void Camera::setTarget(const glm::vec3 &target)
     _viewDirty = true;
 }
 
+const glm::vec3 &Camera::getTarget() const
+{
+    return _target;
+}
+
 void Camera::setUpVector(const glm::vec3 &upVector)
 {
     _upVector = upVector;

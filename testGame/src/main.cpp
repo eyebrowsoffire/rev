@@ -3,6 +3,8 @@
 #include <rev/Engine.h>
 #include <rev/Environment.h>
 #include <rev/IActor.h>
+#include <rev/IKeyboardListener.h>
+#include <rev/IMouseListener.h>
 #include <rev/IndexedModel.h>
 #include <rev/Light.h>
 #include <rev/ObjFile.h>
@@ -11,7 +13,7 @@
 #include <rev/SceneView.h>
 #include <rev/Window.h>
 
-#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 #include <chrono>
 #include <cmath>
@@ -89,13 +91,11 @@ buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
   return normals;
 }
 
-class CameraController : public rev::IActor
+class RotatingCameraController : public rev::IActor
 {
 public:
-  CameraController(std::shared_ptr<rev::Camera> camera)
-  : _camera(std::move(camera))
-  {
-  }
+  RotatingCameraController(std::shared_ptr<rev::Camera> camera)
+      : _camera(std::move(camera)) {}
 
   void tick(rev::Environment &environment, rev::Duration) override
   {
@@ -103,7 +103,7 @@ public:
 
     constexpr float radius = 2.0f;
     float t = FloatSeconds(environment.getTotalElapsedTime()).count();
-    
+
     float y = 1.0f * sin(t / 4.0f);
     float x = radius * cos(t);
     float z = radius * sin(t);
@@ -111,12 +111,116 @@ public:
     _camera->setPosition({x, y, z});
   }
 
-  void kill(rev::Environment &) override
+  void kill(rev::Environment &) override {}
+
+private:
+  std::shared_ptr<rev::Camera> _camera;
+};
+
+class UserCameraController : public rev::IMouseListener,
+                             public rev::IKeyboardListener,
+                             public rev::IActor
+{
+public:
+  UserCameraController(std::shared_ptr<rev::Camera> camera,
+                       const rev::Point<double> &initialPosition)
+      : _camera(std::move(camera)), _lastPosition(initialPosition),
+        _zSpeed(0.0f) {}
+
+  void buttonPressed(rev::MouseButton) override {}
+
+  void buttonReleased(rev::MouseButton) override {}
+
+  void moved(rev::Point<double> position) override
+  {
+    constexpr float sensitivity = 0.01f;
+    float xDelta =
+        static_cast<float>(position.x - _lastPosition.x) * sensitivity;
+    float yDelta =
+        static_cast<float>(position.y - _lastPosition.y) * sensitivity;
+
+    glm::vec3 currentPosition = _camera->getPosition();
+    glm::vec3 target = _camera->getTarget();
+    glm::vec3 cameraVector = target - currentPosition;
+    glm::mat4 transform(1.0f);
+    glm::vec3 upVector = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 leftVector = glm::cross(cameraVector, upVector);
+    transform = glm::rotate(transform, -xDelta, upVector);
+    transform = glm::rotate(transform, -yDelta, leftVector);
+
+    glm::vec4 newCameraVector = transform * glm::vec4(cameraVector, 1.0f);
+    newCameraVector /= newCameraVector.w;
+
+    glm::vec3 newTarget =
+        currentPosition +
+        glm::vec3(newCameraVector.x, newCameraVector.y, newCameraVector.z);
+
+    _camera->setTarget(newTarget);
+
+    _lastPosition = position;
+  }
+
+  void scrolled(double, double) override {}
+
+  void keyPressed(rev::KeyboardKey key) override
+  {
+    switch (key)
+    {
+    case rev::KeyboardKey::W:
+      _zSpeed += 1.0f;
+      break;
+    case rev::KeyboardKey::S:
+      _zSpeed -= 1.0f;
+      break;
+    default:
+      return;
+    }
+  }
+
+  void keyReleased(rev::KeyboardKey key) override 
+  {
+        switch (key)
+    {
+    case rev::KeyboardKey::W:
+      _zSpeed -= 1.0f;
+      break;
+    case rev::KeyboardKey::S:
+      _zSpeed += 1.0f;
+      break;
+    default:
+      return;
+    }
+  }
+
+  void tick(rev::Environment &, rev::Duration elapsedTime) override 
+  {
+    if(abs(_zSpeed) <= 0.01f)
+    {
+      return;
+    }
+
+    using FloatSeconds = std::chrono::duration<float>;
+
+    constexpr float speedFactor = 3.0f;
+    float zDistance = speedFactor * _zSpeed * static_cast<FloatSeconds>(elapsedTime).count();
+
+    auto position = _camera->getPosition();
+    auto target = _camera->getTarget();
+    auto cameraVector = target - position;
+    
+    auto forwardVector = zDistance * glm::normalize(cameraVector);
+    _camera->setPosition(position + forwardVector);
+    _camera->setTarget(target + forwardVector);
+  }
+
+  void kill(rev::Environment&) override
   {
   }
 
 private:
   std::shared_ptr<rev::Camera> _camera;
+  rev::Point<double> _lastPosition{0.0, 0.0};
+  float _zSpeed;
 };
 
 } // namespace
@@ -161,15 +265,21 @@ int main(void)
   orangeLight->setBaseColor(glm::vec3(1.0f, 0.3f, 0.0f));
 
   auto camera = sceneView->getCamera();
-  camera->setTarget({0.0, 0.0, 0.0});
+  camera->setTarget({0.0f, 0.0f, 0.0f});
+  camera->setPosition({4.0f, 4.0f, 4.0f});
   camera->setAspectRatio(1280.0f / 720.0f);
 
-  auto cameraController = std::make_shared<CameraController>(std::move(camera));
+  auto cameraController = std::make_shared<UserCameraController>(
+      std::move(camera), window->getMousePosition());
+  window->addMouseListener(cameraController);
+  window->addKeyboardListener(cameraController);
+
   auto environment = engine.createEnvironment();
   environment->addActor(cameraController);
+
   environment->play();
 
-  while (1)
+  while (!window->wantsClose())
   {
     engine.update();
   }

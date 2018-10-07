@@ -13,6 +13,7 @@ class Camera
     void setPosition(const glm::vec3 &position);
     const glm::vec3 &getPosition() const;
     void setTarget(const glm::vec3 &target);
+    const glm::vec3 &getTarget() const;
     void setUpVector(const glm::vec3 &target);
 
     void setNearClip(float near);

@@ -9,6 +9,7 @@ target_sources(revEngine PRIVATE
   include/rev/Engine.h
   include/rev/Environment.h
   include/rev/IActor.h
+  include/rev/IKeyboardListener.h
   include/rev/IModel.h
   include/rev/IndexedModel.h
   include/rev/Light.h
