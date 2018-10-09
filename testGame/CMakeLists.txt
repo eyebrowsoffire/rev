@@ -12,3 +12,5 @@ target_compile_features(testGame PRIVATE cxx_std_17)
 target_link_libraries(testGame PRIVATE
   revEngine
 )
+
+file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})

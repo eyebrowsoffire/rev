@@ -262,7 +262,7 @@ int main(void)
   auto cubeObject = scene->addObject(cubeModel);
   cubeObject->scale(20.0f);
 
-  rev::ObjFile teapotFile("/Users/jacksongardner/Desktop/teapot-small.obj");
+  rev::ObjFile teapotFile("assets/hoverbike.obj");
   auto teapotModel = teapotFile.createIndexedModel();
   auto teapotObject = scene->addObject(teapotModel);
   teapotObject->translate(glm::vec3(0.0f, -1.0f, 0.0f));

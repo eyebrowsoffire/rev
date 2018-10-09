@@ -114,14 +114,6 @@ void ObjFile::processLine(const std::string &line)
             _triangles.push_back(IndexedTriangle{vertexIndexes[0], vertexIndexes[2], vertexIndexes[3]});
         }
     }
-    else if (lineType == "g")
-    {
-        // Group. Just ignore this for now.
-    }
-    else
-    {
-        throw std::runtime_error("Unexpected data in OBJ file.");
-    }
 }
 
 std::shared_ptr<IndexedModel> ObjFile::createIndexedModel() const 
