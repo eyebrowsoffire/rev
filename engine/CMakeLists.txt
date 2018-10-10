@@ -6,6 +6,7 @@ add_library(revEngine STATIC)
 target_sources(revEngine PRIVATE
   include/rev/BasicModel.h
   include/rev/Camera.h
+  include/rev/CompositeModel.h
   include/rev/Engine.h
   include/rev/Environment.h
   include/rev/IActor.h
@@ -13,6 +14,7 @@ target_sources(revEngine PRIVATE
   include/rev/IModel.h
   include/rev/IndexedModel.h
   include/rev/Light.h
+  include/rev/MtlFile.h
   include/rev/ObjFile.h
   include/rev/RenderStage.h
   include/rev/Scene.h
@@ -20,6 +22,7 @@ target_sources(revEngine PRIVATE
   include/rev/SceneView.h
   include/rev/Types.h
   include/rev/Utilities.h
+  include/rev/WavefrontHelpers.h
   include/rev/Window.h
 
   include/rev/gl/Buffer.h
@@ -34,14 +37,17 @@ target_sources(revEngine PRIVATE
 
   src/BasicModel.cpp
   src/Camera.cpp
+  src/CompositeModel.cpp
   src/Engine.cpp
   src/Environment.cpp
   src/IndexedModel.cpp
   src/Light.cpp
+  src/MtlFile.cpp
   src/ObjFile.cpp
   src/Scene.cpp
   src/SceneObject.cpp
   src/SceneView.cpp
+  src/WavefrontHelpers.cpp
   src/Window.cpp
 )
 
