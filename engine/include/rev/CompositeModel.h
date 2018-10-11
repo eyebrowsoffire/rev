@@ -34,6 +34,7 @@ class ModelComponent
   private:
     Buffer _indexes;
 };
+
 class CompositeModel : public IModel
 {
   public:
@@ -45,6 +46,6 @@ class CompositeModel : public IModel
         Buffer indexes;
     };
     VertexArray _vao;
-    std::vector<>
+    std::vector<ModelComponent>
 };
 } // namespace rev

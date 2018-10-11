@@ -60,7 +60,7 @@ public:
 using VertexShader = Shader<GL_VERTEX_SHADER>;
 using FragmentShader = Shader<GL_FRAGMENT_SHADER>;
 
-class Program : public Resource<glCreateProgram, glDeleteProgram> {
+class ProgramResource : public Resource<glCreateProgram, glDeleteProgram> {
 public:
   template <GLenum shaderType>
   void attachShader(const Shader<shaderType> &shader) {
@@ -111,6 +111,6 @@ public:
   }
 };
 
-using ProgramContext = ResourceContext<Program, glUseProgram>;
+using ProgramContext = ResourceContext<ProgramResource, glUseProgram>;
 
 } // namespace rev

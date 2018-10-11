@@ -7,6 +7,7 @@ target_sources(revEngine PRIVATE
   include/rev/BasicModel.h
   include/rev/Camera.h
   include/rev/CompositeModel.h
+  include/rev/DrawMaterialsProgram.h
   include/rev/Engine.h
   include/rev/Environment.h
   include/rev/IActor.h
@@ -16,6 +17,7 @@ target_sources(revEngine PRIVATE
   include/rev/Light.h
   include/rev/MtlFile.h
   include/rev/ObjFile.h
+  include/rev/ProgramFactory.h
   include/rev/RenderStage.h
   include/rev/Scene.h
   include/rev/SceneObject.h
@@ -29,7 +31,7 @@ target_sources(revEngine PRIVATE
   include/rev/gl/Context.h
   include/rev/gl/FrameBuffer.h
   include/rev/gl/OpenGL.h
-  include/rev/gl/Program.h
+  include/rev/gl/ProgramResource.h
   include/rev/gl/Resource.h
   include/rev/gl/Texture.h
   include/rev/gl/Uniform.h

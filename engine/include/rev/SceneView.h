@@ -5,7 +5,7 @@
 #include "rev/Types.h"
 #include "rev/gl/Buffer.h"
 #include "rev/gl/FrameBuffer.h"
-#include "rev/gl/Program.h"
+#include "rev/gl/ProgramResource.h"
 #include "rev/gl/Texture.h"
 #include "rev/gl/Uniform.h"
 #include "rev/gl/VertexArray.h"
