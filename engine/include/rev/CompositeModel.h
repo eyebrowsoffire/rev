@@ -1,6 +1,9 @@
 #pragma once
 
-#include "rev/IModel.h"
+#include "rev/Camera.h"
+#include "rev/DrawMaterialsProgram.h"
+#include "rev/MaterialProperties.h"
+#include "rev/ProgramFactory.h"
 #include "rev/gl/Buffer.h"
 #include "rev/gl/VertexArray.h"
 
@@ -9,43 +12,77 @@
 namespace rev
 {
 
+struct CompositeObject
+{
+    glm::mat4 transform;
+};
+
 struct VertexData
 {
     glm::vec3 position;
     glm::vec3 normal;
 };
 
-class MaterialProperties
-{
-    glm::vec3 ambientColor;
-    glm::vec3 emissiveColor;
-    glm::vec3 specularColor;
-    glm::vec3 diffuseColor;
-    float specularExponent;
-};
-
 class ModelComponent
 {
   public:
-    ModelComponent(gsl::span<GLuint> indexes, MaterialProperties &materials)
+    ModelComponent(gsl::span<GLuint> indexes, MaterialProperties &properties)
+    : _properties(properties)
+    , _indexCount(indexes.size())
     {
+        ElementBufferContext context(_indexes);
+        context.bindData(indexes, GL_STATIC_DRAW);
+    }
+
+    void draw(DrawMaterialsProgram &program)
+    {
+        program.ambient.set(_properties.ambientColor);
+        program.emissive.set(_properties.emissiveColor);
+        program.diffuse.set(_properties.diffuseColor);
+        program.specular.set(_properties.specularColor);
+        program.specularExponent.set(_properties.specularExponent);
+
+        ElementBufferContext context(_indexes);
+        glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr);
     }
 
   private:
     Buffer _indexes;
+    GLsizei _indexCount;
+    MaterialProperties _properties;
 };
 
-class CompositeModel : public IModel
+class CompositeModel
 {
   public:
-    CompositeModel();
+    CompositeModel(ProgramFactory &factory, std::vector<ModelComponent> &&components)
+    : _components(std::move(components))
+    , _program(factory.getProgram<DrawMaterialsProgram>())
+    {
+    }
+
+    void render(Camera &camera, gsl::span<CompositeObject> objects)
+    {
+        auto programContext = _program->prepareContext();
+        VertexArrayContext vertexContext(_vao);
+
+        _program->view.set(camera.getViewMatrix());
+        _program->projection.set(camera.getProjectionMatrix());
+
+        for(auto &object : objects)
+        {
+            _program->model.set(object.transform);
+
+            for(auto &component : _components)
+            {
+                component.draw(*_program);
+            }
+        }
+    }
 
   private:
-    struct SubModel
-    {
-        Buffer indexes;
-    };
+    std::shared_ptr<DrawMaterialsProgram> _program;
     VertexArray _vao;
-    std::vector<ModelComponent>
+    std::vector<ModelComponent> _components;
 };
 } // namespace rev

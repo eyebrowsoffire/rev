@@ -13,7 +13,7 @@ class ProgramFactory
     template <typename ProgramType>
     std::shared_ptr<ProgramType> getProgram()
     {
-        constexpr ProgramId programId = getProgramId<ProgramType>();
+        ProgramId programId = getProgramId<ProgramType>();
         auto &programWrapper = _programMap[programId]);
         auto typedProgramWrapper = static_cast<ProgramWrapper<ProgramType>*>(programWrapper.get());
         if(typedProgramWrapper != nullptr)
@@ -31,7 +31,7 @@ class ProgramFactory
         }
         else
         {
-            auto newProgramWrapper = std::make_unique<ProgramWrapper<ProgramWrapper>>();
+            auto newProgramWrapper = std::make_unique<ProgramWrapper<ProgramType>>();
             auto program = createProgram<ProgramType>();
 
             newProgramWrapper->setProgram(program);
@@ -55,12 +55,13 @@ class ProgramFactory
         return program;
     }
 
-    using ProgramId = intptr_t;
+    using ProgramId = void*;
 
     template <typename ProgramType>
-    constexpr ProgramId getProgramId()
+    ProgramId getProgramId()
     {
-        return static_cast<ProgramId>(getProgramId<ProgramType>);
+        static int x = 0;
+        return reinterpret_cast<ProgramId>(&x);
     }
 
     class IProgramWrapper
@@ -74,6 +75,8 @@ class ProgramFactory
     {
     public:
         ProgramWrapper()
+        {
+        }
 
         std::shared_ptr<ProgramType> getProgram() const
         {

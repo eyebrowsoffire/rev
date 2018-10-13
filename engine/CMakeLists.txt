@@ -15,12 +15,15 @@ target_sources(revEngine PRIVATE
   include/rev/IModel.h
   include/rev/IndexedModel.h
   include/rev/Light.h
+  include/rev/MaterialModel.h
+  include/rev/MaterialProperties.h
   include/rev/MtlFile.h
   include/rev/ObjFile.h
   include/rev/ProgramFactory.h
   include/rev/RenderStage.h
   include/rev/Scene.h
   include/rev/SceneObject.h
+  include/rev/SceneObjectGroup.h
   include/rev/SceneView.h
   include/rev/Types.h
   include/rev/Utilities.h

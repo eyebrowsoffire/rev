@@ -6,7 +6,6 @@
 
 namespace rev
 {
-
 class DrawMaterialsProgram
 {
   public:
@@ -24,16 +23,20 @@ class DrawMaterialsProgram
         specularExponent = _programResource.getUniform<float>("fSpecularExponent");
     }
 
+    ProgramContext prepareContext()
+    {
+        return ProgramContext(_programResource);
+    }
+
     Uniform<glm::mat4> model;
     Uniform<glm::mat4> view;
     Uniform<glm::mat4> projection;
-    
+
     Uniform<glm::vec3> ambient;
     Uniform<glm::vec3> emissive;
     Uniform<glm::vec3> diffuse;
-    Uniform<glm::ec3> specular;
+    Uniform<glm::vec3> specular;
     Uniform<float> specularExponent;
-
 
     struct Source
     {
