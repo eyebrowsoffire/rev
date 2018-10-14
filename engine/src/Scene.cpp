@@ -2,16 +2,9 @@
 
 #include "rev/Light.h"
 #include "rev/IModel.h"
-#include "rev/SceneObject.h"
 
 namespace rev
 {
-std::shared_ptr<SceneObject> Scene::addObject(std::shared_ptr<IModel> model)
-{
-    auto object = std::make_shared<SceneObject>(model);
-    _objectsByModel[model].insert(object);
-    return std::move(object);
-}
 
 std::shared_ptr<Light> Scene::addLight()
 {
@@ -20,21 +13,16 @@ std::shared_ptr<Light> Scene::addLight()
     return std::move(light);
 }
 
-void Scene::renderAllObjects(Uniform<glm::mat4> &transformUniform,
-                             Uniform<glm::vec3> &baseColor)
+void Scene::addObjectGroup(std::shared_ptr<ISceneObjectGroup> group)
 {
-    for (const auto &pair : _objectsByModel)
+    _objectGroups.push_back(std::move(group));
+}
+
+void Scene::renderAllObjects(Camera &camera)
+{
+    for (const auto &objectGroup : _objectGroups)
     {
-        auto &model = pair.first;
-        VertexArrayContext modelContext = model->getVertexArrayContext();
-
-        baseColor.set({1.0f, 1.0f, 1.0f});
-
-        for (const auto &object : pair.second)
-        {
-            transformUniform.set(object->getTransform());
-            model->draw();
-        }
+        objectGroup->render(camera);
     }
 }
 

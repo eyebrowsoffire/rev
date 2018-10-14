@@ -9,20 +9,22 @@ class ISceneObjectGroup
 {
 public:
     ~ISceneObjectGroup() = default;
-    virtual void render(const Camera &camera) = 0;
+    virtual void render(Camera &camera) = 0;
 };
 
 template <typename ModelType>
-class SceneObjectGroup
+class SceneObjectGroup : public ISceneObjectGroup
 {
 public:
+    using SceneObjectType = typename ModelType::SceneObjectType;
+
     template <typename... Args>
-    SceneObjectGroup(Args... &args)
+    SceneObjectGroup(Args&& ...args)
     : _model(std::forward<Args>(args)...)
     {
     }
 
-    void render(const Camera &camera) override
+    void render(Camera &camera) override
     {
         _model.render(camera, _objects);
     }
@@ -36,7 +38,6 @@ public:
     }
 
 private:
-    using SceneObjectType = typename ModelType::SceneObjectType;
     ModelType _model;
     std::vector<std::shared_ptr<SceneObjectType>> _objects;
 };

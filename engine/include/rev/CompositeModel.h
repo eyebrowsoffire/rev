@@ -8,12 +8,18 @@
 #include "rev/gl/VertexArray.h"
 
 #include <glm/glm.hpp>
+#include <iostream>
+#include <vector>
 
 namespace rev
 {
 
 struct CompositeObject
 {
+    CompositeObject()
+    : transform(1.0f)
+    {
+    }
     glm::mat4 transform;
 };
 
@@ -26,9 +32,9 @@ struct VertexData
 class ModelComponent
 {
   public:
-    ModelComponent(gsl::span<GLuint> indexes, MaterialProperties &properties)
-    : _properties(properties)
-    , _indexCount(indexes.size())
+    ModelComponent(gsl::span<const GLuint> indexes,
+                   const MaterialProperties &properties)
+        : _properties(properties), _indexCount(indexes.size())
     {
         ElementBufferContext context(_indexes);
         context.bindData(indexes, GL_STATIC_DRAW);
@@ -55,13 +61,32 @@ class ModelComponent
 class CompositeModel
 {
   public:
-    CompositeModel(ProgramFactory &factory, std::vector<ModelComponent> &&components)
-    : _components(std::move(components))
-    , _program(factory.getProgram<DrawMaterialsProgram>())
+    using SceneObjectType = CompositeObject;
+
+    CompositeModel(ProgramFactory &factory,
+                   std::vector<ModelComponent> &&components,
+                   gsl::span<const VertexData> vertices)
+        : _components(std::move(components)),
+          _program(factory.getProgram<DrawMaterialsProgram>())
     {
+        VertexArrayContext vertexContext(_vao);
+
+        ArrayBufferContext bufferContext(_vertices);
+
+        bufferContext.bindData(vertices, GL_STATIC_DRAW);
+
+        // Position
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData),
+                              nullptr);
+
+        // Normal
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData),
+                              reinterpret_cast<void *>(sizeof(glm::vec3)));
     }
 
-    void render(Camera &camera, gsl::span<CompositeObject> objects)
+    void render(Camera &camera, gsl::span<std::shared_ptr<CompositeObject>> objects)
     {
         auto programContext = _program->prepareContext();
         VertexArrayContext vertexContext(_vao);
@@ -69,11 +94,11 @@ class CompositeModel
         _program->view.set(camera.getViewMatrix());
         _program->projection.set(camera.getProjectionMatrix());
 
-        for(auto &object : objects)
+        for (auto &object : objects)
         {
-            _program->model.set(object.transform);
+            _program->model.set(object->transform);
 
-            for(auto &component : _components)
+            for (auto &component : _components)
             {
                 component.draw(*_program);
             }
@@ -83,6 +108,7 @@ class CompositeModel
   private:
     std::shared_ptr<DrawMaterialsProgram> _program;
     VertexArray _vao;
+    Buffer _vertices;
     std::vector<ModelComponent> _components;
 };
 } // namespace rev

@@ -1,16 +1,16 @@
-#include <rev/BasicModel.h>
 #include <rev/Camera.h>
 #include <rev/Engine.h>
 #include <rev/Environment.h>
 #include <rev/IActor.h>
 #include <rev/IKeyboardListener.h>
 #include <rev/IMouseListener.h>
-#include <rev/IndexedModel.h>
 #include <rev/Light.h>
+#include <rev/MtlFile.h>
 #include <rev/ObjFile.h>
+#include <rev/ProgramFactory.h>
 #include <rev/Scene.h>
-#include <rev/SceneObject.h>
 #include <rev/SceneView.h>
+#include <rev/WavefrontHelpers.h>
 #include <rev/Window.h>
 
 #include <glm/ext.hpp>
@@ -257,15 +257,12 @@ int main(void)
   auto verticesSpan = gsl::span<const glm::vec3>(kCubeVertices);
   auto normals = buildFlatNormalsForVertices(verticesSpan);
 
-  auto cubeModel = std::make_shared<rev::BasicModel>(
-      verticesSpan, gsl::span<const glm::vec3>(normals));
-  auto cubeObject = scene->addObject(cubeModel);
-  cubeObject->scale(20.0f);
-
-  rev::ObjFile teapotFile("assets/hoverbike.obj");
-  auto teapotModel = teapotFile.createIndexedModel();
-  auto teapotObject = scene->addObject(teapotModel);
-  teapotObject->translate(glm::vec3(0.0f, -1.0f, 0.0f));
+  rev::ObjFile meshFile("assets/hoverbike.obj");
+  rev::MtlFile materialsFile("assets/hoverbike.mtl");
+  rev::ProgramFactory factory;
+  auto objectGroup = rev::createObjectGroupFromWavefrontFiles(factory, meshFile, materialsFile);
+  auto object = objectGroup->addObject();
+  scene->addObjectGroup(objectGroup);
 
   auto yellowLight = scene->addLight();
   yellowLight->setPosition(glm::vec3(4.0f, 3.0f, 3.0f));

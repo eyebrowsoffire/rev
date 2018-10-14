@@ -35,44 +35,78 @@ private:
   std::shared_ptr<Camera> _camera;
 
   RectSize<GLsizei> _outputSize;
-  Program _geometryProgram;
-  Program _lightingProgram;
+  ProgramResource _lightingProgram;
 
-  struct BaseColorProperty
-  {
-  };
   struct WorldSpaceNormalProperty
   {
   };
   struct WorldSpacePositionProperty
   {
   };
+  struct AmbientMaterialProperty
+  {
+  };
+  struct EmissiveMaterialProperty
+  {
+  };
+  struct DiffuseMaterialProperty
+  {
+  };
+  struct SpecularMaterialProperty
+  {
+  };
+  struct SpecularExponentProperty
+  {
+  };
   struct DepthProperty
   {
   };
 
-  using WorldSpaceNormalAttachment = RenderStageAttachment<WorldSpaceNormalProperty, GL_COLOR_ATTACHMENT0, GL_RGB16F, GL_RGB, GL_FLOAT>;
-  using BaseColorAttachment = RenderStageAttachment<BaseColorProperty, GL_COLOR_ATTACHMENT1, GL_RGB16F, GL_RGB, GL_FLOAT>;
-  using WorldSpacePositionAttachment = RenderStageAttachment<WorldSpacePositionProperty, GL_COLOR_ATTACHMENT2, GL_RGB16F, GL_RGB, GL_FLOAT>;
-  using DepthAttachment = RenderStageAttachment<DepthProperty, GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE>;
+  using WorldSpacePositionAttachment =
+      RenderStageAttachment<WorldSpacePositionProperty, GL_COLOR_ATTACHMENT0,
+                            GL_RGB16F, GL_RGB, GL_FLOAT>;
+  using WorldSpaceNormalAttachment =
+      RenderStageAttachment<WorldSpaceNormalProperty, GL_COLOR_ATTACHMENT1,
+                            GL_RGB16F, GL_RGB, GL_FLOAT>;
+  using AmbientAttachment =
+      RenderStageAttachment<AmbientMaterialProperty, GL_COLOR_ATTACHMENT2,
+                            GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE>;
+  using EmissiveAttachment =
+      RenderStageAttachment<EmissiveMaterialProperty, GL_COLOR_ATTACHMENT3,
+                            GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE>;
+  using DiffuseAttachment =
+      RenderStageAttachment<DiffuseMaterialProperty, GL_COLOR_ATTACHMENT4,
+                            GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE>;
+  using SpecularAttachment =
+      RenderStageAttachment<SpecularMaterialProperty, GL_COLOR_ATTACHMENT5,
+                            GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE>;
+  using SpecularExponentAttachment =
+      RenderStageAttachment<SpecularExponentProperty, GL_COLOR_ATTACHMENT6,
+                            GL_R16F, GL_RED,
+                            GL_UNSIGNED_BYTE>;
+  using DepthAttachment =
+      RenderStageAttachment<DepthProperty, GL_DEPTH_ATTACHMENT,
+                            GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT,
+                            GL_UNSIGNED_BYTE>;
 
-  using GeometryStage = RenderStage<WorldSpaceNormalAttachment, BaseColorAttachment, WorldSpacePositionAttachment, DepthAttachment>;
+  using GeometryStage =
+      RenderStage<WorldSpacePositionAttachment, WorldSpaceNormalAttachment,
+                  AmbientAttachment, EmissiveAttachment, DiffuseAttachment,
+                  SpecularAttachment, SpecularExponentAttachment,
+                  DepthAttachment>;
   GeometryStage _geometryStage;
 
   struct OutputColorProperty
   {
   };
-  using OutputColorAttachment = RenderStageAttachment<OutputColorProperty, GL_COLOR_ATTACHMENT0, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE>;
+  using OutputColorAttachment =
+      RenderStageAttachment<OutputColorProperty, GL_COLOR_ATTACHMENT0,
+                            GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE>;
   using LightingStage = RenderStage<OutputColorAttachment>;
   LightingStage _lightingStage;
 
   VertexArray _fullScreenVao;
   Buffer _fullScreenVertexBuffer;
-
-  Uniform<glm::mat4> _model;
-  Uniform<glm::mat4> _view;
-  Uniform<glm::mat4> _projection;
-  Uniform<glm::vec3> _faceBaseColor;
 
   Uniform<glm::vec3> _lightPosition;
   Uniform<glm::vec3> _lightBaseColor;

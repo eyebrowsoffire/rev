@@ -4,7 +4,6 @@ conan_basic_setup()
 add_library(revEngine STATIC)
 
 target_sources(revEngine PRIVATE
-  include/rev/BasicModel.h
   include/rev/Camera.h
   include/rev/CompositeModel.h
   include/rev/DrawMaterialsProgram.h
@@ -13,16 +12,13 @@ target_sources(revEngine PRIVATE
   include/rev/IActor.h
   include/rev/IKeyboardListener.h
   include/rev/IModel.h
-  include/rev/IndexedModel.h
   include/rev/Light.h
-  include/rev/MaterialModel.h
   include/rev/MaterialProperties.h
   include/rev/MtlFile.h
   include/rev/ObjFile.h
   include/rev/ProgramFactory.h
   include/rev/RenderStage.h
   include/rev/Scene.h
-  include/rev/SceneObject.h
   include/rev/SceneObjectGroup.h
   include/rev/SceneView.h
   include/rev/Types.h
@@ -40,17 +36,13 @@ target_sources(revEngine PRIVATE
   include/rev/gl/Uniform.h
   include/rev/gl/VertexArray.h
 
-  src/BasicModel.cpp
   src/Camera.cpp
-  src/CompositeModel.cpp
   src/Engine.cpp
   src/Environment.cpp
-  src/IndexedModel.cpp
   src/Light.cpp
   src/MtlFile.cpp
   src/ObjFile.cpp
   src/Scene.cpp
-  src/SceneObject.cpp
   src/SceneView.cpp
   src/WavefrontHelpers.cpp
   src/Window.cpp

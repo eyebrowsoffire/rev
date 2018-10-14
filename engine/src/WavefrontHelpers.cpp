@@ -1,5 +1,10 @@
 #include "rev/WavefrontHelpers.h"
 
+#include "rev/CompositeModel.h"
+#include "rev/MtlFile.h"
+#include "rev/ObjFile.h"
+#include "rev/SceneObjectGroup.h"
+
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <vector>
@@ -23,39 +28,49 @@ struct hash<glm::uvec3>
 namespace rev
 {
 
-std::shared_ptr<IModel> createModelFromWavefrontFile(const std::string &filePath)
+std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefrontFiles(ProgramFactory &factory,
+                                                                       const ObjFile &objFile,
+                                                                       const MtlFile &mtlFile)
 {
     std::vector<VertexData> vertexAttributes;
-    std::vector<GLuint> indexes;
     std::unordered_map<glm::uvec3, GLuint> vertexMapping;
+    std::vector<ModelComponent> components;
 
-    for (const auto &triangle : _triangles)
+    for (const auto &waveFrontObject : objFile.getWavefrontObjects())
     {
-        for (const auto &vertex : triangle)
+        std::vector<GLuint> indexes;
+        for (const auto &triangle : waveFrontObject.triangles)
         {
-            GLuint index;
-            auto iter = vertexMapping.find(vertex);
-            if (iter != vertexMapping.end())
+            for (const auto &vertex : triangle)
             {
-                index = iter->second;
-                Expects(iter->first == vertex);
-            }
-            else
-            {
-                VertexData data;
-                data.position = _positions[vertex[0]];
-                data.textureCoordinate = _textureCoordinates[vertex[1]];
-                data.normal = _normals[vertex[2]];
+                GLuint index;
+                auto iter = vertexMapping.find(vertex);
+                if (iter != vertexMapping.end())
+                {
+                    index = iter->second;
+                    Expects(iter->first == vertex);
+                }
+                else
+                {
+                    VertexData data;
+                    data.position = waveFrontObject.positions[vertex[0]];
+                    data.normal = waveFrontObject.normals[vertex[2]];
 
-                index = vertexAttributes.size();
-                vertexAttributes.push_back(data);
+                    index = vertexAttributes.size();
+                    vertexAttributes.push_back(data);
 
-                vertexMapping[vertex] = index;
+                    vertexMapping[vertex] = index;
+                }
+                indexes.push_back(index);
             }
-            indexes.push_back(index);
         }
+
+        const MaterialProperties *properties = mtlFile.propertiesForMaterial(waveFrontObject.materialName);
+        Expects(properties != nullptr);
+
+        components.emplace_back(indexes, *properties);
     }
 
-    return std::make_shared<IndexedModel>(vertexAttributes, indexes);
+    return std::make_shared<SceneObjectGroup<CompositeModel>>(factory, std::move(components), vertexAttributes);
 }
 } // namespace rev

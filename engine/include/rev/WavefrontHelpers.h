@@ -1,11 +1,17 @@
 #pragma once
 
+#include "rev/CompositeModel.h"
+#include "rev/SceneObjectGroup.h"
+
 #include <glm/glm.hpp>
 #include <sstream>
 
 namespace rev
 {
-class IModel;
+class ISceneObjectGroup;
+class ObjFile;
+class MtlFile;
+class ProgramFactory;
 
 inline glm::vec2 getVec2(std::istringstream &stream)
 {
@@ -24,5 +30,7 @@ inline glm::vec3 getVec3(std::istringstream &stream)
     return vec;
 }
 
-std::shared_ptr<IModel> createModelFromWavefrontFile(const std::string &filePath);
+std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefrontFiles(ProgramFactory &factory,
+                                                                                      const ObjFile &objFile,
+                                                                                      const MtlFile &mtlFile);
 } // namespace rev

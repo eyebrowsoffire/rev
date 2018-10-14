@@ -1,9 +1,9 @@
 #include "rev/Window.h"
 
-#include "rev/gl/OpenGL.h"
 #include "rev/IKeyboardListener.h"
 #include "rev/IMouseListener.h"
 #include "rev/SceneView.h"
+#include "rev/gl/OpenGL.h"
 
 #include <iostream>
 #include <memory>
@@ -69,7 +69,7 @@ struct WindowData
 {
     std::shared_ptr<SceneView> sceneView;
     GLFWwindow *window;
-    Program drawProgram;
+    ProgramResource drawProgram;
     glm::vec2 aspect;
     Uniform<glm::vec2> aspectUniform;
     VertexArray vao;
@@ -90,7 +90,8 @@ Window::Window(const std::string &title, const RectSize<int> size)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(size.width, size.height, title.c_str(), NULL, NULL);
+    GLFWwindow *window =
+        glfwCreateWindow(size.width, size.height, title.c_str(), NULL, NULL);
     if (window == nullptr)
     {
         throw std::runtime_error("Could not create GLFW window.");
@@ -104,18 +105,22 @@ Window::Window(const std::string &title, const RectSize<int> size)
     _data->window = window;
 
     _data->drawProgram.buildWithSource(kVertexShader, kFragmentShader);
-    _data->aspectUniform = _data->drawProgram.getUniform<glm::vec2>("aspect");
-    _data->drawProgram.getUniform<GLint>("inputTexture").set(0);
-
+    ProgramContext progContext(_data->drawProgram);
+    {
+        _data->aspectUniform = _data->drawProgram.getUniform<glm::vec2>("aspect");
+        _data->drawProgram.getUniform<GLint>("inputTexture").set(0);
+    }
     glfwSetInputMode(_data->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    glfwSetFramebufferSizeCallback(_data->window, [](GLFWwindow *window, int, int) {
+    glfwSetFramebufferSizeCallback(_data->window, [](GLFWwindow *window, int,
+                                                     int) {
         Window *myThis = static_cast<Window *>(glfwGetWindowUserPointer(window));
         myThis->updateAspect();
     });
     updateAspect();
 
-    glfwSetCursorPosCallback(_data->window, [](GLFWwindow *window, double xPos, double yPos) {
+    glfwSetCursorPosCallback(_data->window, [](GLFWwindow *window, double xPos,
+                                               double yPos) {
         Window *myThis = static_cast<Window *>(glfwGetWindowUserPointer(window));
         Point<double> position{xPos, yPos};
         for (const auto &listener : myThis->_data->mouseListeners)
@@ -124,41 +129,44 @@ Window::Window(const std::string &title, const RectSize<int> size)
         }
     });
 
-    glfwSetMouseButtonCallback(_data->window, [](GLFWwindow *window, int glfwButton, int action, int) {
-        Window *myThis = static_cast<Window *>(glfwGetWindowUserPointer(window));
+    glfwSetMouseButtonCallback(
+        _data->window, [](GLFWwindow *window, int glfwButton, int action, int) {
+            Window *myThis =
+                static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        MouseButton button;
-        switch (glfwButton)
-        {
-        case GLFW_MOUSE_BUTTON_LEFT:
-            button = MouseButton::Left;
-            break;
-        case GLFW_MOUSE_BUTTON_RIGHT:
-            button = MouseButton::Right;
-            break;
-        default:
-            return;
-        }
-
-        switch (action)
-        {
-        case GLFW_PRESS:
-            for (const auto &listener : myThis->_data->mouseListeners)
+            MouseButton button;
+            switch (glfwButton)
             {
-                listener->buttonPressed(button);
+            case GLFW_MOUSE_BUTTON_LEFT:
+                button = MouseButton::Left;
+                break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                button = MouseButton::Right;
+                break;
+            default:
+                return;
             }
-            break;
-        case GLFW_RELEASE:
-            for (const auto &listener : myThis->_data->mouseListeners)
-            {
-                listener->buttonReleased(button);
-            }
-        default:
-            return;
-        }
-    });
 
-    glfwSetScrollCallback(_data->window, [](GLFWwindow *window, double xOffset, double yOffset) {
+            switch (action)
+            {
+            case GLFW_PRESS:
+                for (const auto &listener : myThis->_data->mouseListeners)
+                {
+                    listener->buttonPressed(button);
+                }
+                break;
+            case GLFW_RELEASE:
+                for (const auto &listener : myThis->_data->mouseListeners)
+                {
+                    listener->buttonReleased(button);
+                }
+            default:
+                return;
+            }
+        });
+
+    glfwSetScrollCallback(_data->window, [](GLFWwindow *window, double xOffset,
+                                            double yOffset) {
         Window *myThis = static_cast<Window *>(glfwGetWindowUserPointer(window));
         for (const auto &listener : myThis->_data->mouseListeners)
         {
@@ -166,7 +174,8 @@ Window::Window(const std::string &title, const RectSize<int> size)
         }
     });
 
-    glfwSetKeyCallback(_data->window, [](GLFWwindow *window, int glfwKey, int, int action, int) {
+    glfwSetKeyCallback(_data->window, [](GLFWwindow *window, int glfwKey, int,
+                                         int action, int) {
         Window *myThis = static_cast<Window *>(glfwGetWindowUserPointer(window));
         KeyboardKey key;
         switch (glfwKey)
@@ -216,9 +225,7 @@ Window::Window(const std::string &title, const RectSize<int> size)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
 }
 
-Window::~Window()
-{
-}
+Window::~Window() {}
 
 void Window::setSceneView(std::shared_ptr<SceneView> sceneView)
 {
@@ -226,10 +233,7 @@ void Window::setSceneView(std::shared_ptr<SceneView> sceneView)
     updateAspect();
 }
 
-void Window::makeCurrent()
-{
-    glfwMakeContextCurrent(_data->window);
-}
+void Window::makeCurrent() { glfwMakeContextCurrent(_data->window); }
 
 void Window::draw()
 {
@@ -282,10 +286,13 @@ void Window::updateAspect()
     }
 
     RectSize<GLsizei> frameBufferSize;
-    glfwGetFramebufferSize(_data->window, &frameBufferSize.width, &frameBufferSize.height);
+    glfwGetFramebufferSize(_data->window, &frameBufferSize.width,
+                           &frameBufferSize.height);
 
-    float contentAspect = static_cast<float>(contentSize.width) / static_cast<float>(contentSize.height);
-    float frameBufferAspect = static_cast<float>(frameBufferSize.width) / static_cast<float>(frameBufferSize.height);
+    float contentAspect = static_cast<float>(contentSize.width) /
+                          static_cast<float>(contentSize.height);
+    float frameBufferAspect = static_cast<float>(frameBufferSize.width) /
+                              static_cast<float>(frameBufferSize.height);
 
     if (frameBufferAspect > contentAspect)
     {
@@ -297,10 +304,7 @@ void Window::updateAspect()
     }
 }
 
-bool Window::wantsClose()
-{
-    return glfwWindowShouldClose(_data->window);
-}
+bool Window::wantsClose() { return glfwWindowShouldClose(_data->window); }
 
 Point<double> Window::getMousePosition()
 {

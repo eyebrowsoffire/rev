@@ -27,7 +27,7 @@ class RenderStage
   public:
     RenderStage()
     {
-        WriteFrameBufferContext context(_frameBuffer);
+        ReadWriteFrameBufferContext context(_frameBuffer);
         std::vector<GLenum> drawBuffers;
         visitTuple(_attachments, [&context, &drawBuffers](auto &attachment) {
             using AttachmentType = std::decay_t<decltype(attachment)>;
@@ -41,6 +41,7 @@ class RenderStage
             }
         });
         glDrawBuffers(drawBuffers.size(), drawBuffers.data());
+        glGetError();
     }
 
     void setOutputSize(const RectSize<GLsizei> &size)

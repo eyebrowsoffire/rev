@@ -13,7 +13,7 @@ MtlFile::MtlFile(const std::string &filePath)
     std::ifstream file{filePath};
     if (!file)
     {
-        throw std::runtime_error("Unable to read OBJ file.");
+        throw std::runtime_error("Unable to read MTL file.");
     }
 
     std::string currentMaterialName;
@@ -65,12 +65,13 @@ MtlFile::MtlFile(const std::string &filePath)
             currentMaterialProperties.emissiveColor = getVec3(stream);
         }
     }
+    commitProperty(currentMaterialName, currentMaterialProperties);
 }
 
-const MtlFile::MaterialProperties *MtlFile::propertiesForMaterial(const std::string &materialName) const
+const MaterialProperties *MtlFile::propertiesForMaterial(const std::string &materialName) const
 {
     auto iter = _materialMap.find(materialName);
-    return iter != _materialMap.end() ? *iter : nullptr;
+    return iter != _materialMap.end() ? &iter->second : nullptr;
 }
 
 void MtlFile::commitProperty(const std::string &name, const MaterialProperties &properties)

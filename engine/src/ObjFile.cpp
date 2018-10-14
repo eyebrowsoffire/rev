@@ -1,6 +1,5 @@
 #include "rev/ObjFile.h"
 
-#include "rev/IndexedModel.h"
 #include "rev/WavefrontHelpers.h"
 
 #include <fstream>
@@ -19,6 +18,8 @@ ObjFile::ObjFile(const std::string &filePath)
         throw std::runtime_error("Unable to read OBJ file.");
     }
 
+    bool firstObject = true;
+    WavefrontObject object;
     while (!file.eof())
     {
         std::string line;
@@ -31,13 +32,15 @@ ObjFile::ObjFile(const std::string &filePath)
         std::string lineType;
         lineStream >> lineType;
 
-        bool firstObject;
-        WavefrontObject object;
         if (lineType == "o")
         {
             if(!firstObject)
             {
                 _wfObjects.push_back(std::move(object));
+            }
+            else
+            {
+                firstObject = false;
             }
             continue;
         }
@@ -111,6 +114,7 @@ ObjFile::ObjFile(const std::string &filePath)
             lineStream >> object.materialName;
         }
     }
+    _wfObjects.push_back(object);
 }
 
 gsl::span<const ObjFile::WavefrontObject> ObjFile::getWavefrontObjects() const

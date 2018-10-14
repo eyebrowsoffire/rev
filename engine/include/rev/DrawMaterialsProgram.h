@@ -81,8 +81,8 @@ class DrawMaterialsProgram
                 uniform vec3 fSpecular;
                 uniform float fSpecularExponent;
 
-                layout(location = 0) out vec3 normal;
-                layout(location = 1) out vec3 position;
+                layout(location = 0) out vec3 position;
+                layout(location = 1) out vec3 normal;
 
                 layout(location = 2) out vec3 ambient;
                 layout(location = 3) out vec3 emissive;
@@ -92,8 +92,8 @@ class DrawMaterialsProgram
 
                 void main() 
                 {
-                    normal = fNormal;
                     position = fPosition;
+                    normal = fNormal;
 
                     ambient = fAmbient;
                     emissive = fEmissive;

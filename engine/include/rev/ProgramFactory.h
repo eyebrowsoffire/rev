@@ -14,7 +14,7 @@ class ProgramFactory
     std::shared_ptr<ProgramType> getProgram()
     {
         ProgramId programId = getProgramId<ProgramType>();
-        auto &programWrapper = _programMap[programId]);
+        auto &programWrapper = _programMap[programId];
         auto typedProgramWrapper = static_cast<ProgramWrapper<ProgramType>*>(programWrapper.get());
         if(typedProgramWrapper != nullptr)
         {

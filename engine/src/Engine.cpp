@@ -14,7 +14,7 @@ std::shared_ptr<Scene> Engine::createScene()
 }
 
 std::shared_ptr<SceneView> Engine::createSceneView()
-{
+{  
     return std::make_shared<SceneView>();
 }
 

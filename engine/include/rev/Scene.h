@@ -1,11 +1,13 @@
 #pragma once
 
 #include "rev/gl/Uniform.h"
+#include "rev/SceneObjectGroup.h"
 
 #include <glm/glm.hpp>
 #include <map>
 #include <memory>
 #include <set>
+#include <vector>
 
 namespace rev
 {
@@ -16,13 +18,14 @@ class SceneObject;
 class Scene
 {
 public:
-    std::shared_ptr<SceneObject> addObject(std::shared_ptr<IModel> model);
     std::shared_ptr<Light> addLight();
 
-    void renderAllObjects(Uniform<glm::mat4>& transformUniform, Uniform<glm::vec3>& baseColorUniform);
+    void renderAllObjects(Camera &camera);
     void renderAllLights(Uniform<glm::vec3>& lightPositionUniform, Uniform<glm::vec3>& lightBaseColor);
+
+    void addObjectGroup(std::shared_ptr<ISceneObjectGroup> group);
 private:
-    std::map<std::shared_ptr<IModel>, std::set<std::shared_ptr<SceneObject>>> _objectsByModel;
+    std::vector<std::shared_ptr<ISceneObjectGroup>> _objectGroups;
     std::set<std::shared_ptr<Light>> _lights;
 };
 
