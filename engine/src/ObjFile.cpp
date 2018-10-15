@@ -34,7 +34,7 @@ ObjFile::ObjFile(const std::string &filePath)
 
         if (lineType == "o")
         {
-            if(!firstObject)
+            if (!firstObject)
             {
                 _wfObjects.push_back(std::move(object));
             }
@@ -48,21 +48,21 @@ ObjFile::ObjFile(const std::string &filePath)
         if (lineType == "v")
         {
             glm::vec3 position = getVec3(lineStream);
-            object.positions.push_back(position);
+            _positions.push_back(position);
             continue;
         }
 
         if (lineType == "vt")
         {
             glm::vec2 uv = getVec2(lineStream);
-            object.textureCoordinates.push_back(uv);
+            _textureCoordinates.push_back(uv);
             continue;
         }
 
         if (lineType == "vn")
         {
             glm::vec3 normal = getVec3(lineStream);
-            object.normals.push_back(normal);
+            _normals.push_back(normal);
             continue;
         }
 
@@ -97,15 +97,15 @@ ObjFile::ObjFile(const std::string &filePath)
             {
                 // Just a triangle
                 object.triangles.push_back(WavefrontObject::IndexedTriangle{vertexIndexes[0], vertexIndexes[1],
-                                                     vertexIndexes[2]});
+                                                                            vertexIndexes[2]});
             }
             else if (vertexCount == 4)
             {
                 // Quad
                 object.triangles.push_back(WavefrontObject::IndexedTriangle{vertexIndexes[0], vertexIndexes[1],
-                                                     vertexIndexes[2]});
+                                                                            vertexIndexes[2]});
                 object.triangles.push_back(WavefrontObject::IndexedTriangle{vertexIndexes[0], vertexIndexes[2],
-                                                     vertexIndexes[3]});
+                                                                            vertexIndexes[3]});
             }
         }
 
@@ -120,6 +120,21 @@ ObjFile::ObjFile(const std::string &filePath)
 gsl::span<const ObjFile::WavefrontObject> ObjFile::getWavefrontObjects() const
 {
     return _wfObjects;
+}
+
+const glm::vec3 &ObjFile::positionAtIndex(size_t index) const
+{
+    return _positions[index];
+}
+
+const glm::vec2 &ObjFile::textureCoordinateAtIndex(size_t index) const
+{
+    return _textureCoordinates[index];
+}
+
+const glm::vec3 &ObjFile::normalAtIndex(size_t index) const
+{
+    return _normals[index];
 }
 
 } // namespace rev

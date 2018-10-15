@@ -52,8 +52,8 @@ class DrawMaterialsProgram
                 uniform mat4 view;
                 uniform mat4 projection;
 
-                out vec3 fNormal;
                 out vec3 fPosition;
+                out vec3 fNormal;
 
                 void main()
                 {
@@ -72,8 +72,8 @@ class DrawMaterialsProgram
             return R"fragmentShader(
                 #version 330 core
 
-                in vec3 fNormal;
                 in vec3 fPosition;
+                in vec3 fNormal;
 
                 uniform vec3 fAmbient;
                 uniform vec3 fEmissive;

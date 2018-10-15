@@ -33,9 +33,10 @@ std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefront
                                                                        const MtlFile &mtlFile)
 {
     std::vector<VertexData> vertexAttributes;
-    std::unordered_map<glm::uvec3, GLuint> vertexMapping;
     std::vector<ModelComponent> components;
+    std::unordered_map<glm::uvec3, GLuint> vertexMapping;
 
+    size_t vertexOffset = 0;
     for (const auto &waveFrontObject : objFile.getWavefrontObjects())
     {
         std::vector<GLuint> indexes;
@@ -53,8 +54,8 @@ std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefront
                 else
                 {
                     VertexData data;
-                    data.position = waveFrontObject.positions[vertex[0]];
-                    data.normal = waveFrontObject.normals[vertex[2]];
+                    data.position = objFile.positionAtIndex(vertex[0]);
+                    data.normal = objFile.normalAtIndex(vertex[2]);
 
                     index = vertexAttributes.size();
                     vertexAttributes.push_back(data);

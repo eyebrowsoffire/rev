@@ -6,9 +6,11 @@
 
 #include <iostream>
 
-namespace rev {
+namespace rev
+{
 
-namespace {
+namespace
+{
 
 constexpr const char *kDeferredVertexShader = R"vertexShader(
     #version 330 core
@@ -47,7 +49,7 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
         void main() 
         {
             vec3 normal = texture(normals, texCoord).rgb;
-            vec3 baseColor = texture(diffuse, texCoord).rgb;
+            vec3 diffuse = texture(diffuse, texCoord).rgb;
 
             vec3 fragmentPosition = texture(fragPosition, texCoord).rgb;
             vec3 lightVector = lightPosition - fragmentPosition;
@@ -55,15 +57,18 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
             float attenuation = 1.0f / (1.0f + 0.01 * dot(lightVector, lightVector));
             float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
 
-            float shininess = 200.0f;
+            float specularExponent = texture(specularExponent, texCoord).r * 4.0f;
+            vec3 specularCoefficient = texture(specular, texCoord).rgb;
 
             vec3 eyeVector = normalize(camPosition - fragmentPosition);
             vec3 halfwayVector = normalize(eyeVector + normalize(lightVector));
             float specularComponent = max(dot(halfwayVector, normal), 0.0f);
 
-            vec3 ambientLight = vec3(0.01f) * baseColor;
-            vec3 diffuseLight = baseColor * lightBaseColor * attenuation * angleMultiplier;
-            vec3 specularLight = lightBaseColor * pow(specularComponent, shininess);
+            vec3 ambientLight = vec3(0.01f) * diffuse;
+            vec3 diffuseLight = diffuse * lightBaseColor * attenuation * angleMultiplier;
+            vec3 specularLight = (specularExponent > 0.01) 
+                 ? lightBaseColor * pow(vec3(specularComponent) * specularCoefficient, vec3(specularExponent))
+                 : vec3(0.0f);
 
             vec3 totalLight = diffuseLight + specularLight + ambientLight;
             
@@ -72,13 +77,16 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
     )fragmentShader";
 
 constexpr glm::vec2 kFullScreenQuadVertices[] = {
-    {-1.0f, -1.0},  {-1.0f, 1.0f}, {1.0f, 1.0f},
+    {-1.0f, -1.0}, {-1.0f, 1.0f}, {1.0f, 1.0f},
 
-    {-1.0f, -1.0f}, {1.0f, 1.0f},  {1.0f, -1.0f}};
+    {-1.0f, -1.0f},
+    {1.0f, 1.0f},
+    {1.0f, -1.0f}};
 
 } // namespace
 
-SceneView::SceneView() : _camera(std::make_shared<Camera>()) {
+SceneView::SceneView() : _camera(std::make_shared<Camera>())
+{
   _lightingProgram.buildWithSource(kDeferredVertexShader,
                                    kDeferredFragmentShader);
   {
@@ -107,13 +115,16 @@ SceneView::SceneView() : _camera(std::make_shared<Camera>()) {
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
 }
 
-void SceneView::setScene(std::shared_ptr<Scene> scene) {
+void SceneView::setScene(std::shared_ptr<Scene> scene)
+{
   _scene = std::move(scene);
 }
 
-void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize) {
+void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize)
+{
   if (_outputSize.width == outputSize.width &&
-      _outputSize.height == outputSize.height) {
+      _outputSize.height == outputSize.height)
+  {
     return;
   }
   _outputSize = outputSize;
@@ -121,14 +132,17 @@ void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize) {
   _lightingStage.setOutputSize(outputSize);
 }
 
-const RectSize<GLsizei> &SceneView::getOutputSize() const {
+const RectSize<GLsizei> &SceneView::getOutputSize() const
+{
   return _outputSize;
 }
 
 const std::shared_ptr<Camera> &SceneView::getCamera() const { return _camera; }
 
-void SceneView::render() {
-  if (!_scene) {
+void SceneView::render()
+{
+  if (!_scene)
+  {
     return;
   }
 
@@ -182,8 +196,9 @@ void SceneView::render() {
   }
 }
 
-const Texture &SceneView::getOutputTexture() const { 
-  return _lightingStage.getOutputTexture<OutputColorProperty>(); 
+const Texture &SceneView::getOutputTexture() const
+{
+  return _lightingStage.getOutputTexture<OutputColorProperty>();
 }
 
 } // namespace rev
