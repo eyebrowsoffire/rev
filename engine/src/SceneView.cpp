@@ -57,17 +57,17 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
             float attenuation = 1.0f / (1.0f + 0.01 * dot(lightVector, lightVector));
             float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
 
-            float specularExponent = texture(specularExponent, texCoord).r * 4.0f;
+            float specularExponent = texture(specularExponent, texCoord).r;
             vec3 specularCoefficient = texture(specular, texCoord).rgb;
 
             vec3 eyeVector = normalize(camPosition - fragmentPosition);
-            vec3 halfwayVector = normalize(eyeVector + normalize(lightVector));
-            float specularComponent = max(dot(halfwayVector, normal), 0.0f);
+            vec3 reflectVector = normalize(reflect(lightVector, normalize(normal)));
+            float specularComponent = max(dot(eyeVector, reflectVector), 0.0f);
 
             vec3 ambientLight = vec3(0.01f) * diffuse;
             vec3 diffuseLight = diffuse * lightBaseColor * attenuation * angleMultiplier;
             vec3 specularLight = (specularExponent > 0.01) 
-                 ? lightBaseColor * pow(vec3(specularComponent) * specularCoefficient, vec3(specularExponent))
+                 ? lightBaseColor * specularCoefficient * pow(vec3(specularComponent) , vec3(specularExponent))
                  : vec3(0.0f);
 
             vec3 totalLight = diffuseLight + specularLight + ambientLight;
