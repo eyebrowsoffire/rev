@@ -12,16 +12,21 @@ target_sources(revEngine PRIVATE
   include/rev/IActor.h
   include/rev/IKeyboardListener.h
   include/rev/IModel.h
+  include/rev/IntegerSequenceUtilities.h
   include/rev/Light.h
   include/rev/MaterialProperties.h
   include/rev/MtlFile.h
   include/rev/ObjFile.h
+  include/rev/physics/Particle.h
+  include/rev/physics/PhysicsUnits.h
+  include/rev/physics/System.h
   include/rev/ProgramFactory.h
   include/rev/RenderStage.h
   include/rev/Scene.h
   include/rev/SceneObjectGroup.h
   include/rev/SceneView.h
   include/rev/Types.h
+  include/rev/Unit.h
   include/rev/Utilities.h
   include/rev/WavefrontHelpers.h
   include/rev/Window.h
@@ -52,5 +57,9 @@ target_include_directories(revEngine PUBLIC include)
 target_compile_features(revEngine PRIVATE cxx_std_17)
 
 target_link_libraries(revEngine PRIVATE
-  ${CONAN_LIBS}
+  CONAN_PKG::glfw
+  CONAN_PKG::glm
+  CONAN_PKG::gsl_microsoft
 )
+
+add_subdirectory(tests)

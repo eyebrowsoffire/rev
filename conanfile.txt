@@ -2,6 +2,7 @@
 glfw/3.2.1@bincrafters/stable
 gsl_microsoft/2.0.0@bincrafters/stable
 glm/0.9.8.5@bincrafters/stable
+gtest/1.8.1@bincrafters/stable
 
 [generators]
 cmake

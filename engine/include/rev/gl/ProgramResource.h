@@ -7,16 +7,21 @@
 #include <gsl/gsl_assert>
 #include <string>
 
-namespace rev {
+namespace rev
+{
 
-template <GLenum shaderType> GLuint createShader() {
+template <GLenum shaderType>
+GLuint createShader()
+{
   return glCreateShader(shaderType);
 }
 
-namespace detail {
+namespace detail
+{
 template <void (*propertyGetter)(GLuint, GLenum, GLint *),
           void (*logGetter)(GLuint, GLsizei, GLsizei *, GLchar *)>
-std::string extractLog(GLuint objectId) {
+std::string extractLog(GLuint objectId)
+{
   GLint logLength;
   propertyGetter(objectId, GL_INFO_LOG_LENGTH, &logLength);
 
@@ -33,9 +38,11 @@ std::string extractLog(GLuint objectId) {
 } // namespace detail
 
 template <GLenum shaderType>
-class Shader : public Resource<createShader<shaderType>, glDeleteShader> {
+class Shader : public Resource<createShader<shaderType>, glDeleteShader>
+{
 public:
-  void setSource(std::string_view source) {
+  void setSource(std::string_view source)
+  {
     auto *data = source.data();
     auto length = source.size();
     Expects(length <= std::numeric_limits<GLint>::max());
@@ -46,13 +53,15 @@ public:
 
   void compile() { glCompileShader(this->getId()); }
 
-  bool getCompileStatus() {
+  bool getCompileStatus()
+  {
     GLint status;
     glGetShaderiv(this->getId(), GL_COMPILE_STATUS, &status);
     return (status == GL_TRUE);
   }
 
-  std::string getCompileLog() {
+  std::string getCompileLog()
+  {
     return detail::extractLog<glGetShaderiv, glGetShaderInfoLog>(this->getId());
   }
 };
@@ -60,51 +69,60 @@ public:
 using VertexShader = Shader<GL_VERTEX_SHADER>;
 using FragmentShader = Shader<GL_FRAGMENT_SHADER>;
 
-class ProgramResource : public Resource<glCreateProgram, glDeleteProgram> {
+class ProgramResource : public Resource<glCreateProgram, glDeleteProgram>
+{
 public:
   template <GLenum shaderType>
-  void attachShader(const Shader<shaderType> &shader) {
+  void attachShader(const Shader<shaderType> &shader)
+  {
     glAttachShader(getId(), shader.getId());
   }
 
   void link() { glLinkProgram(getId()); }
 
-  bool getLinkStatus() {
+  bool getLinkStatus()
+  {
     GLint status;
     glGetProgramiv(getId(), GL_LINK_STATUS, &status);
     return (status == GL_TRUE);
   }
 
-  std::string getLinkLog() {
+  std::string getLinkLog()
+  {
     return detail::extractLog<glGetProgramiv, glGetProgramInfoLog>(getId());
   }
 
   void buildWithSource(std::string_view vertexSource,
-                       std::string_view fragmentSource) {
+                       std::string_view fragmentSource)
+  {
     VertexShader vShader;
     vShader.setSource(vertexSource);
     vShader.compile();
-    if (!vShader.getCompileStatus()) {
+    if (!vShader.getCompileStatus())
+    {
       throw vShader.getCompileLog();
     }
 
     FragmentShader fShader;
     fShader.setSource(fragmentSource);
     fShader.compile();
-    if (!fShader.getCompileStatus()) {
+    if (!fShader.getCompileStatus())
+    {
       throw fShader.getCompileLog();
     }
 
     attachShader(vShader);
     attachShader(fShader);
     link();
-    if (!getLinkStatus()) {
+    if (!getLinkStatus())
+    {
       throw getLinkLog();
     }
   }
 
   template <typename VariableType>
-  Uniform<VariableType> getUniform(const char *name) {
+  Uniform<VariableType> getUniform(const char *name)
+  {
     GLint location = glGetUniformLocation(getId(), name);
 
     return Uniform<VariableType>(location);
