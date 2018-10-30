@@ -192,6 +192,9 @@ Window::Window(const std::string &title, const RectSize<int> size)
         case GLFW_KEY_D:
             key = KeyboardKey::D;
             break;
+        case GLFW_KEY_SPACE:
+            key = KeyboardKey::Space;
+            break;
         default:
             return;
         }

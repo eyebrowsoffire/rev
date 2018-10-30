@@ -7,6 +7,9 @@
 #include <rev/Light.h>
 #include <rev/MtlFile.h>
 #include <rev/ObjFile.h>
+#include <rev/physics/Gravity.h>
+#include <rev/physics/Particle.h>
+#include <rev/physics/System.h>
 #include <rev/ProgramFactory.h>
 #include <rev/Scene.h>
 #include <rev/SceneView.h>
@@ -238,6 +241,56 @@ private:
   float _xSpeed;
 };
 
+class BikeController : public rev::IActor, public rev::IKeyboardListener
+{
+public:
+  BikeController(std::shared_ptr<rev::physics::Particle> particle, std::shared_ptr<rev::CompositeObject> sceneObject)
+  : _particle(std::move(particle))
+  , _sceneObject(std::move(sceneObject))
+  {
+    Expects(_particle != nullptr);
+    Expects(_sceneObject != nullptr);
+  }
+
+  void tick(rev::Environment &, rev::Duration elapsedTime) override
+  {
+    if(_thrustersOn)
+    {
+      rev::physics::Force<glm::vec3> force(0.0f, 7000.0f, 0.0f);
+
+      _particle->addImpulse(force * rev::physics::durationToPhysicsTime(elapsedTime));
+    }
+    glm::mat4 identity;
+    _sceneObject->transform = glm::translate(identity, _particle->getPosition().getValue());
+  }
+
+  void kill(rev::Environment &environment) override
+  {
+  }
+
+  void keyPressed(rev::KeyboardKey key) override
+  {
+    if (key == rev::KeyboardKey::Space)
+    {
+      _thrustersOn = true;
+    }
+  }
+
+  void keyReleased(rev::KeyboardKey key) override
+  {
+    if (key == rev::KeyboardKey::Space)
+    {
+      _thrustersOn = false;
+    }
+
+  }
+
+private:
+  std::shared_ptr<rev::physics::Particle> _particle;
+  std::shared_ptr<rev::CompositeObject> _sceneObject;
+  bool _thrustersOn = false;
+};
+
 } // namespace
 
 int main(void)
@@ -264,6 +317,16 @@ int main(void)
   auto object = objectGroup->addObject();
   scene->addObjectGroup(objectGroup);
 
+  auto physicsSystem = std::make_shared<rev::physics::System>();
+  auto bikeParticle = physicsSystem->addParticle();
+  bikeParticle->setMass(500.0f);
+
+  auto gravity = physicsSystem->getGravity();
+  gravity->setAcceleration(glm::vec3(0.0f, -10.f, 0.0f));
+  gravity->addParticle(bikeParticle);
+
+  auto bikeController = std::make_shared<BikeController>(bikeParticle, object);
+
   auto yellowLight = scene->addLight();
   yellowLight->setPosition(glm::vec3(4.0f, 3.0f, 3.0f));
   yellowLight->setBaseColor(glm::vec3(1.0f, 1.0f, 0.8f));
@@ -285,9 +348,12 @@ int main(void)
       std::move(camera), window->getMousePosition());
   window->addMouseListener(cameraController);
   window->addKeyboardListener(cameraController);
+  window->addKeyboardListener(bikeController);
 
   auto environment = engine.createEnvironment();
   environment->addActor(cameraController);
+  environment->addActor(physicsSystem);
+  environment->addActor(bikeController);
 
   environment->play();
 

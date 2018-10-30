@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rev/Types.h"
 #include "rev/Unit.h"
 
 namespace rev::physics
@@ -53,5 +54,13 @@ using Momentum = Unit<ValueType, MomentumComposition>;
 
 template <typename ValueType>
 using Force = Unit<ValueType, ForceComposition>;
+
+inline Time<float> durationToPhysicsTime(Duration duration)
+{
+    using FloatSecondsDuration = std::chrono::duration<float>;
+    FloatSecondsDuration floatDuration = duration;
+    return floatDuration.count();
+}   
+
 
 } // namespace rev::physics

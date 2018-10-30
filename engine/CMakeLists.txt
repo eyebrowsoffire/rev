@@ -17,6 +17,7 @@ target_sources(revEngine PRIVATE
   include/rev/MaterialProperties.h
   include/rev/MtlFile.h
   include/rev/ObjFile.h
+  include/rev/physics/Gravity.h
   include/rev/physics/Particle.h
   include/rev/physics/PhysicsUnits.h
   include/rev/physics/System.h
@@ -47,6 +48,9 @@ target_sources(revEngine PRIVATE
   src/Light.cpp
   src/MtlFile.cpp
   src/ObjFile.cpp
+  src/physics/Gravity.cpp
+  src/physics/Particle.cpp
+  src/physics/System.cpp
   src/Scene.cpp
   src/SceneView.cpp
   src/WavefrontHelpers.cpp

@@ -7,7 +7,8 @@ enum class KeyboardKey
     W,
     S,
     A,
-    D
+    D,
+    Space
 };
 
 class IKeyboardListener

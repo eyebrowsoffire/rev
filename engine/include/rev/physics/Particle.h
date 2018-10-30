@@ -6,12 +6,22 @@
 
 namespace rev::physics
 {
-    class PhysicsParticle
+    class Particle
     {
     public:
+        void setMass(Mass<float> mass);
+        Mass<float> getMass() const;
+        void addImpulse(const Momentum<glm::vec3> &impulse);
+
+        void flushImpulses();
+        void updatePosition(Time<float> elapsedTime);
+
+        const Distance<glm::vec3> &getPosition() const;
+
     private:
-        Force<glm::vec3> _accumulatedForce;
+        Momentum<glm::vec3> _accumulatedImpulse;
         Velocity<glm::vec3> _velocity;
         Distance<glm::vec3> _position;
+        Mass<float> _mass;
     };
 }
