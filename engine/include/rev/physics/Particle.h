@@ -17,6 +17,10 @@ namespace rev::physics
         void updatePosition(Time<float> elapsedTime);
 
         const Distance<glm::vec3> &getPosition() const;
+        void setPosition(const Distance<glm::vec3> &position);
+
+        const Velocity<glm::vec3> &getVelocity() const;
+        void setVelocity(const Velocity<glm::vec3> &velocity);
 
     private:
         Momentum<glm::vec3> _accumulatedImpulse;

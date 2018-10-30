@@ -260,6 +260,19 @@ public:
 
       _particle->addImpulse(force * rev::physics::durationToPhysicsTime(elapsedTime));
     }
+
+    const auto &currentPosition = _particle->getPosition().getValue();
+    if(currentPosition.y < 0.0f)
+    {
+      auto newPosition = currentPosition;
+      newPosition.y = 0.0f;
+      _particle->setPosition(newPosition);
+
+      auto newVelocity = _particle->getVelocity().getValue();
+      newVelocity.y = 0.0f;
+      _particle->setVelocity(newVelocity);
+    }
+
     glm::mat4 identity;
     _sceneObject->transform = glm::translate(identity, _particle->getPosition().getValue());
   }
@@ -282,7 +295,6 @@ public:
     {
       _thrustersOn = false;
     }
-
   }
 
 private:

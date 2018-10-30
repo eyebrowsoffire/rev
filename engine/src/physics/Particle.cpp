@@ -27,4 +27,19 @@ const Distance<glm::vec3> &Particle::getPosition() const
     return _position;
 }
 
+void Particle::setPosition(const Distance<glm::vec3> &position)
+{
+    _position = position;
+}
+
+const Velocity<glm::vec3> &Particle::getVelocity() const
+{
+    return _velocity;
+}
+
+void Particle::setVelocity(const Velocity<glm::vec3> &velocity)
+{
+    _velocity = velocity;
+}
+
 } // namespace rev::physics
