@@ -35,7 +35,8 @@ private:
   std::shared_ptr<Camera> _camera;
 
   RectSize<GLsizei> _outputSize;
-  ProgramResource _lightingProgram;
+  ProgramResource _pointLightingProgram;
+  ProgramResource _directionalLightingProgram;
 
   struct WorldSpaceNormalProperty
   {
@@ -109,6 +110,7 @@ private:
   Buffer _fullScreenVertexBuffer;
 
   Uniform<glm::vec3> _lightPosition;
+  Uniform<glm::vec3> _lightDirection;
   Uniform<glm::vec3> _lightBaseColor;
   Uniform<glm::vec3> _camPosition;
 };

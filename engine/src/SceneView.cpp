@@ -27,7 +27,54 @@ constexpr const char *kDeferredVertexShader = R"vertexShader(
 
     )vertexShader";
 
-constexpr const char *kDeferredFragmentShader = R"fragmentShader(
+constexpr const char *kDeferredDirectionalLightFragmentShader = R"fragmentShader(
+        #version 330 core
+
+        in vec2 texCoord;
+
+        uniform vec3 lightDirection;
+        uniform vec3 lightBaseColor;
+        uniform vec3 camPosition;
+
+        uniform sampler2D fragPosition;
+        uniform sampler2D normals;
+
+        uniform sampler2D ambient;
+        uniform sampler2D emissive;
+        uniform sampler2D diffuse;
+        uniform sampler2D specular;
+        uniform sampler2D specularExponent;
+
+        out vec4 fragColor;
+        void main() 
+        {
+            vec3 normal = texture(normals, texCoord).rgb;
+            vec3 diffuse = texture(diffuse, texCoord).rgb;
+
+            vec3 fragmentPosition = texture(fragPosition, texCoord).rgb;
+            vec3 lightVector = 1.0f * lightDirection;
+            float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
+
+            float specularExponent = texture(specularExponent, texCoord).r;
+            vec3 specularCoefficient = texture(specular, texCoord).rgb;
+
+            vec3 eyeVector = normalize(camPosition - fragmentPosition);
+            vec3 reflectVector = normalize(reflect(lightVector, normalize(normal)));
+            float specularComponent = max(dot(eyeVector, reflectVector), 0.0f);
+
+            vec3 ambientLight = vec3(0.01f) * diffuse;
+            vec3 diffuseLight = diffuse * lightBaseColor * angleMultiplier;
+            vec3 specularLight = (specularExponent > 0.01) 
+                 ? lightBaseColor * specularCoefficient * pow(vec3(specularComponent) , vec3(specularExponent))
+                 : vec3(0.0f);
+
+            vec3 totalLight = diffuseLight + specularLight;
+            
+            fragColor = vec4(totalLight, 1.0f);
+        }
+    )fragmentShader";
+
+constexpr const char *kDeferredPointLightFragmentShader = R"fragmentShader(
         #version 330 core
 
         in vec2 texCoord;
@@ -87,22 +134,32 @@ constexpr glm::vec2 kFullScreenQuadVertices[] = {
 
 SceneView::SceneView() : _camera(std::make_shared<Camera>())
 {
-  _lightingProgram.buildWithSource(kDeferredVertexShader,
-                                   kDeferredFragmentShader);
+  _pointLightingProgram.buildWithSource(kDeferredVertexShader,
+                                   kDeferredPointLightFragmentShader);
   {
-    ProgramContext programContext(_lightingProgram);
-    _lightPosition = _lightingProgram.getUniform<glm::vec3>("lightPosition");
-    _lightBaseColor = _lightingProgram.getUniform<glm::vec3>("lightBaseColor");
-    _camPosition = _lightingProgram.getUniform<glm::vec3>("camPosition");
+    ProgramContext programContext(_pointLightingProgram);
+    _pointLightingProgram.getUniform<GLint>("fragPosition").set(0);
+    _pointLightingProgram.getUniform<GLint>("normals").set(1);
 
-    _lightingProgram.getUniform<GLint>("fragPosition").set(0);
-    _lightingProgram.getUniform<GLint>("normals").set(1);
+    _pointLightingProgram.getUniform<GLint>("ambient").set(2);
+    _pointLightingProgram.getUniform<GLint>("emissive").set(3);
+    _pointLightingProgram.getUniform<GLint>("diffuse").set(4);
+    _pointLightingProgram.getUniform<GLint>("specular").set(5);
+    _pointLightingProgram.getUniform<GLint>("specularExponent").set(6);
+  }
 
-    _lightingProgram.getUniform<GLint>("ambient").set(2);
-    _lightingProgram.getUniform<GLint>("emissive").set(3);
-    _lightingProgram.getUniform<GLint>("diffuse").set(4);
-    _lightingProgram.getUniform<GLint>("specular").set(5);
-    _lightingProgram.getUniform<GLint>("specularExponent").set(6);
+  _directionalLightingProgram.buildWithSource(kDeferredVertexShader,
+                                   kDeferredDirectionalLightFragmentShader);
+  {
+    ProgramContext programContext(_directionalLightingProgram);
+    _directionalLightingProgram.getUniform<GLint>("fragPosition").set(0);
+    _directionalLightingProgram.getUniform<GLint>("normals").set(1);
+
+    _directionalLightingProgram.getUniform<GLint>("ambient").set(2);
+    _directionalLightingProgram.getUniform<GLint>("emissive").set(3);
+    _directionalLightingProgram.getUniform<GLint>("diffuse").set(4);
+    _directionalLightingProgram.getUniform<GLint>("specular").set(5);
+    _directionalLightingProgram.getUniform<GLint>("specularExponent").set(6);
   }
 
   VertexArrayContext vaoContext(_fullScreenVao);
@@ -162,7 +219,6 @@ void SceneView::render()
 
   // Lighting pass
   {
-    ProgramContext programContext(_lightingProgram);
     auto fbContext = _lightingStage.getRenderContext();
 
     _camPosition.set(_camera->getPosition());
@@ -192,7 +248,23 @@ void SceneView::render()
 
     VertexArrayContext vaoContext(_fullScreenVao);
 
-    _scene->renderAllLights(_lightPosition, _lightBaseColor);
+    // Render all point lights
+    {
+      ProgramContext programContext(_pointLightingProgram);
+      _lightPosition = _pointLightingProgram.getUniform<glm::vec3>("lightPosition");
+      _lightBaseColor = _pointLightingProgram.getUniform<glm::vec3>("lightBaseColor");
+      _camPosition = _pointLightingProgram.getUniform<glm::vec3>("camPosition");
+      _scene->renderAllPointLights(_lightPosition, _lightBaseColor);
+    }
+
+    // Render all directional lights
+    {
+      ProgramContext programContext(_directionalLightingProgram);
+      _lightDirection = _directionalLightingProgram.getUniform<glm::vec3>("lightDirection");
+      _lightBaseColor = _directionalLightingProgram.getUniform<glm::vec3>("lightBaseColor");
+      _camPosition = _directionalLightingProgram.getUniform<glm::vec3>("camPosition");
+      _scene->renderAllDirectionalLights(_lightDirection, _lightBaseColor);
+    }
   }
 }
 

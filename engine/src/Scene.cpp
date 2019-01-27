@@ -6,10 +6,17 @@
 namespace rev
 {
 
-std::shared_ptr<Light> Scene::addLight()
+std::shared_ptr<PointLight> Scene::addPointLight()
 {
-    auto light = std::make_shared<Light>();
-    _lights.insert(light);
+    auto light = std::make_shared<PointLight>();
+    _pointLights.insert(light);
+    return std::move(light);
+}
+
+std::shared_ptr<DirectionalLight> Scene::addDirectionalLight()
+{
+    auto light = std::make_shared<DirectionalLight>();
+    _directionalLights.insert(light);
     return std::move(light);
 }
 
@@ -26,10 +33,22 @@ void Scene::renderAllObjects(Camera &camera)
     }
 }
 
-void Scene::renderAllLights(Uniform<glm::vec3> &lightPositionUniform,
+void Scene::renderAllDirectionalLights(Uniform<glm::vec3> &lightDirectionUniform,
+                    Uniform<glm::vec3> &lightBaseColor)
+{
+    for (const auto & light : _directionalLights)
+    {
+        lightDirectionUniform.set(light->getDirection());
+        lightBaseColor.set(light->getBaseColor());
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+}             
+
+void Scene::renderAllPointLights(Uniform<glm::vec3> &lightPositionUniform,
                      Uniform<glm::vec3> &lightBaseColor)
 {
-    for (const auto & light : _lights)
+    for (const auto & light : _pointLights)
     {
         lightPositionUniform.set(light->getPosition());
         lightBaseColor.set(light->getBaseColor());

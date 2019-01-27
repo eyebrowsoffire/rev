@@ -2,9 +2,9 @@
 
 namespace rev
 {
+    // Light
     Light::Light()
     : _baseColor(glm::vec3(1.0))
-    , _position(glm::vec3(0.0))
     {
     }
 
@@ -18,13 +18,35 @@ namespace rev
         _baseColor = color;
     }
 
-    const glm::vec3& Light::getPosition() const
+    // PointLight
+    PointLight::PointLight()
+    : _position(glm::vec3(0.0))
+    {
+    }
+
+    const glm::vec3& PointLight::getPosition() const
     {
         return _position;
     }
 
-    void Light::setPosition(const glm::vec3& position)
+    void PointLight::setPosition(const glm::vec3& position)
     {
         _position = position;
+    }
+
+    // DirectionalLight
+    DirectionalLight::DirectionalLight()
+    : _direction(glm::vec3(0.0, -1.0, 0.0))
+    {
+    }
+
+    const glm::vec3& DirectionalLight::getDirection() const 
+    {
+        return _direction;
+    }
+
+    void DirectionalLight::setDirection(const glm::vec3& direction)
+    {
+        _direction = direction;
     }
 }

@@ -339,17 +339,21 @@ int main(void)
 
   auto bikeController = std::make_shared<BikeController>(bikeParticle, object);
 
-  auto yellowLight = scene->addLight();
+  auto yellowLight = scene->addPointLight();
   yellowLight->setPosition(glm::vec3(4.0f, 3.0f, 3.0f));
   yellowLight->setBaseColor(glm::vec3(1.0f, 1.0f, 0.8f));
 
-  auto blueLight = scene->addLight();
+  auto blueLight = scene->addPointLight();
   blueLight->setPosition(glm::vec3(-1.5f, -2.0f, 1.5f));
   blueLight->setBaseColor(glm::vec3(0.2f, 0.2f, 1.0f));
 
-  auto orangeLight = scene->addLight();
+  auto orangeLight = scene->addPointLight();
   orangeLight->setPosition(glm::vec3(3.0f, 0.75f, -2.5f));
   orangeLight->setBaseColor(glm::vec3(1.0f, 0.3f, 0.0f));
+
+  auto directionalLight = scene->addDirectionalLight();
+  directionalLight->setDirection(glm::vec3(-1.0, 0.0f, 0.0f));
+  directionalLight->setBaseColor(glm::vec3(1.0f, 1.0f, 1.0f));
 
   auto camera = sceneView->getCamera();
   camera->setTarget({0.0f, 0.0f, 0.0f});
