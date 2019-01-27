@@ -10,9 +10,6 @@ protected:
 public:
     const glm::vec3& getBaseColor() const;
     void setBaseColor(const glm::vec3& color);
-
-    const glm::mat4x4& getLightSpaceTransform() const;
-    void setLightSpaceTransform(const glm::mat4x4& transform);
 private:
     glm::vec3 _baseColor;
 };

@@ -109,9 +109,21 @@ private:
   VertexArray _fullScreenVao;
   Buffer _fullScreenVertexBuffer;
 
-  Uniform<glm::vec3> _lightPosition;
-  Uniform<glm::vec3> _lightDirection;
-  Uniform<glm::vec3> _lightBaseColor;
-  Uniform<glm::vec3> _camPosition;
+  struct DirectionalLightUniforms
+  {
+    Uniform<glm::vec3> lightDirection;
+    Uniform<glm::vec3> lightBaseColor;
+    Uniform<glm::vec3> camPosition;
+  };
+
+  struct PointLightUniforms
+  { 
+    Uniform<glm::vec3> lightPosition;
+    Uniform<glm::vec3> lightBaseColor;
+    Uniform<glm::vec3> camPosition;
+  };
+
+  PointLightUniforms _pointLightUniforms;
+  DirectionalLightUniforms _directionalLightUniforms;
 };
 } // namespace rev

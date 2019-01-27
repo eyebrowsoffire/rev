@@ -138,6 +138,11 @@ SceneView::SceneView() : _camera(std::make_shared<Camera>())
                                    kDeferredPointLightFragmentShader);
   {
     ProgramContext programContext(_pointLightingProgram);
+
+    _pointLightUniforms.lightPosition = _pointLightingProgram.getUniform<glm::vec3>("lightPosition");
+    _pointLightUniforms.lightBaseColor = _pointLightingProgram.getUniform<glm::vec3>("lightBaseColor");
+    _pointLightUniforms.camPosition = _pointLightingProgram.getUniform<glm::vec3>("camPosition");
+
     _pointLightingProgram.getUniform<GLint>("fragPosition").set(0);
     _pointLightingProgram.getUniform<GLint>("normals").set(1);
 
@@ -152,6 +157,11 @@ SceneView::SceneView() : _camera(std::make_shared<Camera>())
                                    kDeferredDirectionalLightFragmentShader);
   {
     ProgramContext programContext(_directionalLightingProgram);
+
+    _directionalLightUniforms.lightDirection = _directionalLightingProgram.getUniform<glm::vec3>("lightDirection");
+    _directionalLightUniforms.lightBaseColor = _directionalLightingProgram.getUniform<glm::vec3>("lightBaseColor");
+    _directionalLightUniforms.camPosition = _directionalLightingProgram.getUniform<glm::vec3>("camPosition");
+
     _directionalLightingProgram.getUniform<GLint>("fragPosition").set(0);
     _directionalLightingProgram.getUniform<GLint>("normals").set(1);
 
@@ -221,7 +231,6 @@ void SceneView::render()
   {
     auto fbContext = _lightingStage.getRenderContext();
 
-    _camPosition.set(_camera->getPosition());
     glViewport(0, 0, _outputSize.width, _outputSize.height);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -251,19 +260,15 @@ void SceneView::render()
     // Render all point lights
     {
       ProgramContext programContext(_pointLightingProgram);
-      _lightPosition = _pointLightingProgram.getUniform<glm::vec3>("lightPosition");
-      _lightBaseColor = _pointLightingProgram.getUniform<glm::vec3>("lightBaseColor");
-      _camPosition = _pointLightingProgram.getUniform<glm::vec3>("camPosition");
-      _scene->renderAllPointLights(_lightPosition, _lightBaseColor);
+      _pointLightUniforms.camPosition.set(_camera->getPosition());
+      _scene->renderAllPointLights(_pointLightUniforms.lightPosition, _pointLightUniforms.lightBaseColor);
     }
 
     // Render all directional lights
     {
       ProgramContext programContext(_directionalLightingProgram);
-      _lightDirection = _directionalLightingProgram.getUniform<glm::vec3>("lightDirection");
-      _lightBaseColor = _directionalLightingProgram.getUniform<glm::vec3>("lightBaseColor");
-      _camPosition = _directionalLightingProgram.getUniform<glm::vec3>("camPosition");
-      _scene->renderAllDirectionalLights(_lightDirection, _lightBaseColor);
+      _directionalLightUniforms.camPosition.set(_camera->getPosition());
+      _scene->renderAllDirectionalLights(_directionalLightUniforms.lightDirection, _directionalLightUniforms.lightBaseColor);
     }
   }
 }
