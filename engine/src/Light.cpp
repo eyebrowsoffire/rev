@@ -1,52 +1,54 @@
 #include "rev/Light.h"
 
+using namespace std;
+using namespace glm;
+
 namespace rev
 {
     // Light
-    Light::Light()
-    : _baseColor(glm::vec3(1.0))
+    Light::Light(Type type)
+    : _baseColor(0.f), _type(type)
     {
     }
+
+    Light::Type Light::getType() const
+    {
+        return _type;
+    } 
 
     const glm::vec3& Light::getBaseColor() const
     {
         return _baseColor;
     }
 
-    void Light::setBaseColor(const glm::vec3& color)
+    void Light::setBaseColor(const glm::vec3& baseColor)
     {
-        _baseColor = color;
+        _baseColor = baseColor;
     }
 
-    // PointLight
-    PointLight::PointLight()
-    : _position(glm::vec3(0.0))
+    const glm::vec3& Light::getPosition() const
     {
+        assert(_position.has_value());
+        return *_position;
     }
 
-    const glm::vec3& PointLight::getPosition() const
+    void Light::setPosition(const glm::vec3& position)
     {
-        return _position;
+        assert(_type == Type::Point);
+        _position = make_optional<glm::vec3>(position);
     }
 
-    void PointLight::setPosition(const glm::vec3& position)
+    const glm::vec3& Light::getDirection() const 
     {
-        _position = position;
+        assert(_direction.has_value());
+        return *_direction;
     }
 
-    // DirectionalLight
-    DirectionalLight::DirectionalLight()
-    : _direction(glm::vec3(0.0, -1.0, 0.0))
+    void Light::setDirection(const glm::vec3& direction)
     {
-    }
-
-    const glm::vec3& DirectionalLight::getDirection() const 
-    {
-        return _direction;
-    }
-
-    void DirectionalLight::setDirection(const glm::vec3& direction)
-    {
-        _direction = direction;
+        //TODO: Is there a way to ensure that the programmer is not 
+        // calling these methods on the wrong type of light statically?
+        assert(_type == Type::Directional);
+        _direction = make_optional<glm::vec3>(direction);
     }
 }

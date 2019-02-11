@@ -52,7 +52,7 @@ constexpr const char *kDeferredDirectionalLightFragmentShader = R"fragmentShader
             vec3 diffuse = texture(diffuse, texCoord).rgb;
 
             vec3 fragmentPosition = texture(fragPosition, texCoord).rgb;
-            vec3 lightVector = 1.0f * lightDirection;
+            vec3 lightVector = -1.0f * lightDirection;
             float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
 
             float specularExponent = texture(specularExponent, texCoord).r;

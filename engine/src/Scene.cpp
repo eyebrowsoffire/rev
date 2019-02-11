@@ -6,16 +6,16 @@
 namespace rev
 {
 
-std::shared_ptr<PointLight> Scene::addPointLight()
+std::shared_ptr<Light> Scene::addPointLight()
 {
-    auto light = std::make_shared<PointLight>();
+    auto light = std::make_shared<Light>(Light::Type::Point);
     _pointLights.insert(light);
     return std::move(light);
 }
 
-std::shared_ptr<DirectionalLight> Scene::addDirectionalLight()
+std::shared_ptr<Light> Scene::addDirectionalLight()
 {
-    auto light = std::make_shared<DirectionalLight>();
+    auto light = std::make_shared<Light>(Light::Type::Directional);
     _directionalLights.insert(light);
     return std::move(light);
 }

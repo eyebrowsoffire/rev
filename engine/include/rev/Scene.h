@@ -11,16 +11,15 @@
 
 namespace rev
 {
-class PointLight;
-class DirectionalLight;
+class Light;
 class IModel;
 class SceneObject;
 
 class Scene
 {
 public:
-    std::shared_ptr<PointLight> addPointLight();
-    std::shared_ptr<DirectionalLight> addDirectionalLight();
+    std::shared_ptr<Light> addPointLight();
+    std::shared_ptr<Light> addDirectionalLight();
 
     void renderAllObjects(Camera &camera);
     void renderAllPointLights(Uniform<glm::vec3>& lightPositionUniform, Uniform<glm::vec3>& lightBaseColor);
@@ -29,8 +28,8 @@ public:
     void addObjectGroup(std::shared_ptr<ISceneObjectGroup> group);
 private:
     std::vector<std::shared_ptr<ISceneObjectGroup>> _objectGroups;
-    std::set<std::shared_ptr<PointLight>> _pointLights;
-    std::set<std::shared_ptr<DirectionalLight>> _directionalLights;
+    std::set<std::shared_ptr<Light>> _pointLights;
+    std::set<std::shared_ptr<Light>> _directionalLights;
 };
 
 } // namespace rev
