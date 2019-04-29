@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+#include <limits>
 #include <tuple>
 #include <utility>
 
@@ -21,6 +23,18 @@ void visitTuple(TupleType &&tuple, VisitorType &&visitor)
     visitTupleWithIndexes(std::forward<TupleType>(tuple),
                           std::forward<VisitorType>(visitor),
                           Indexes{});
+}
+
+template <typename ValueType>
+ValueType lerp(ValueType a, ValueType b, ValueType t)
+{
+    return a + t * (b - a);
+}
+
+template <typename ValueType>
+bool nearEqual(ValueType a, ValueType b, ValueType ep = std::numeric_limits<ValueType>::epsilon())
+{
+    return abs(a - b) < ep;
 }
 
 } // namespace rev

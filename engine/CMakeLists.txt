@@ -17,6 +17,7 @@ target_sources(revEngine PRIVATE
   include/rev/MaterialProperties.h
   include/rev/MtlFile.h
   include/rev/ObjFile.h
+  include/rev/NurbsCurve.h
   include/rev/physics/Gravity.h
   include/rev/physics/Particle.h
   include/rev/physics/PhysicsUnits.h
