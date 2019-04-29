@@ -1,16 +1,14 @@
 #include "rev/SceneView.h"
 
 #include "rev/Camera.h"
-#include "rev/Scene.h"
 #include "rev/RenderStage.h"
+#include "rev/Scene.h"
 
 #include <iostream>
 
-namespace rev
-{
+namespace rev {
 
-namespace
-{
+namespace {
 
 constexpr const char *kDeferredVertexShader = R"vertexShader(
     #version 330 core
@@ -77,16 +75,13 @@ constexpr const char *kDeferredFragmentShader = R"fragmentShader(
     )fragmentShader";
 
 constexpr glm::vec2 kFullScreenQuadVertices[] = {
-    {-1.0f, -1.0}, {-1.0f, 1.0f}, {1.0f, 1.0f},
+    {-1.0f, -1.0},  {-1.0f, 1.0f}, {1.0f, 1.0f},
 
-    {-1.0f, -1.0f},
-    {1.0f, 1.0f},
-    {1.0f, -1.0f}};
+    {-1.0f, -1.0f}, {1.0f, 1.0f},  {1.0f, -1.0f}};
 
 } // namespace
 
-SceneView::SceneView() : _camera(std::make_shared<Camera>())
-{
+SceneView::SceneView() : _camera(std::make_shared<Camera>()) {
   _lightingProgram.buildWithSource(kDeferredVertexShader,
                                    kDeferredFragmentShader);
   {
@@ -115,16 +110,13 @@ SceneView::SceneView() : _camera(std::make_shared<Camera>())
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
 }
 
-void SceneView::setScene(std::shared_ptr<Scene> scene)
-{
+void SceneView::setScene(std::shared_ptr<Scene> scene) {
   _scene = std::move(scene);
 }
 
-void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize)
-{
+void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize) {
   if (_outputSize.width == outputSize.width &&
-      _outputSize.height == outputSize.height)
-  {
+      _outputSize.height == outputSize.height) {
     return;
   }
   _outputSize = outputSize;
@@ -132,17 +124,14 @@ void SceneView::setOutputSize(const RectSize<GLsizei> &outputSize)
   _lightingStage.setOutputSize(outputSize);
 }
 
-const RectSize<GLsizei> &SceneView::getOutputSize() const
-{
+const RectSize<GLsizei> &SceneView::getOutputSize() const {
   return _outputSize;
 }
 
 const std::shared_ptr<Camera> &SceneView::getCamera() const { return _camera; }
 
-void SceneView::render()
-{
-  if (!_scene)
-  {
+void SceneView::render() {
+  if (!_scene) {
     return;
   }
 
@@ -173,19 +162,33 @@ void SceneView::render()
     glDisable(GL_DEPTH_TEST);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<WorldSpacePositionProperty>().getId());
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _geometryStage.getOutputTexture<WorldSpacePositionProperty>().getId());
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<WorldSpaceNormalProperty>().getId());
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _geometryStage.getOutputTexture<WorldSpaceNormalProperty>().getId());
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<AmbientMaterialProperty>().getId());
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _geometryStage.getOutputTexture<AmbientMaterialProperty>().getId());
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<EmissiveMaterialProperty>().getId());
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _geometryStage.getOutputTexture<EmissiveMaterialProperty>().getId());
     glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<DiffuseMaterialProperty>().getId());
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _geometryStage.getOutputTexture<DiffuseMaterialProperty>().getId());
     glActiveTexture(GL_TEXTURE5);
-    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<SpecularMaterialProperty>().getId());
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _geometryStage.getOutputTexture<SpecularMaterialProperty>().getId());
     glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, _geometryStage.getOutputTexture<SpecularExponentProperty>().getId());
+    glBindTexture(
+        GL_TEXTURE_2D,
+        _geometryStage.getOutputTexture<SpecularExponentProperty>().getId());
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -196,8 +199,7 @@ void SceneView::render()
   }
 }
 
-const Texture &SceneView::getOutputTexture() const
-{
+const Texture &SceneView::getOutputTexture() const {
   return _lightingStage.getOutputTexture<OutputColorProperty>();
 }
 

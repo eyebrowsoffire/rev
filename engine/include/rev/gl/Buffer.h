@@ -7,22 +7,24 @@
 
 namespace rev {
 
-using Buffer = Resource<singleCreate<glGenBuffers>, singleDestroy<glDeleteBuffers>>;
+using Buffer =
+    Resource<singleCreate<glGenBuffers>, singleDestroy<glDeleteBuffers>>;
 
-template<GLenum target>
+template <GLenum target>
 class BindBufferContext
-    : public ResourceContext<Buffer, enumTargetBindFunction<glBindBuffer, target>> {
+    : public ResourceContext<Buffer,
+                             enumTargetBindFunction<glBindBuffer, target>> {
 public:
-    using ResourceContext<Buffer, enumTargetBindFunction<glBindBuffer, target>>::ResourceContext;
+  using ResourceContext<
+      Buffer, enumTargetBindFunction<glBindBuffer, target>>::ResourceContext;
 
-    template<typename ElementType>
-    void bindData(gsl::span<const ElementType> data, GLenum usage)
-    {
-        glBufferData(target, data.size_bytes(), data.data(), usage);
-    }
+  template <typename ElementType>
+  void bindData(gsl::span<const ElementType> data, GLenum usage) {
+    glBufferData(target, data.size_bytes(), data.data(), usage);
+  }
 };
 
 using ArrayBufferContext = BindBufferContext<GL_ARRAY_BUFFER>;
 using ElementBufferContext = BindBufferContext<GL_ELEMENT_ARRAY_BUFFER>;
 
-} // namespace Twitch::GraphicsUtility
+} // namespace rev

@@ -6,31 +6,29 @@
 #include <glm/glm.hpp>
 #include <sstream>
 
-namespace rev
-{
+namespace rev {
 class ISceneObjectGroup;
 class ObjFile;
 class MtlFile;
 class ProgramFactory;
 
-inline glm::vec2 getVec2(std::istringstream &stream)
-{
-    glm::vec2 vec;
-    stream >> vec.x;
-    stream >> vec.y;
-    return vec;
+inline glm::vec2 getVec2(std::istringstream &stream) {
+  glm::vec2 vec;
+  stream >> vec.x;
+  stream >> vec.y;
+  return vec;
 }
 
-inline glm::vec3 getVec3(std::istringstream &stream)
-{
-    glm::vec3 vec;
-    stream >> vec.x;
-    stream >> vec.y;
-    stream >> vec.z;
-    return vec;
+inline glm::vec3 getVec3(std::istringstream &stream) {
+  glm::vec3 vec;
+  stream >> vec.x;
+  stream >> vec.y;
+  stream >> vec.z;
+  return vec;
 }
 
-std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefrontFiles(ProgramFactory &factory,
-                                                                                      const ObjFile &objFile,
-                                                                                      const MtlFile &mtlFile);
+std::shared_ptr<SceneObjectGroup<CompositeModel>>
+createObjectGroupFromWavefrontFiles(ProgramFactory &factory,
+                                    const ObjFile &objFile,
+                                    const MtlFile &mtlFile);
 } // namespace rev

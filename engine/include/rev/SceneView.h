@@ -13,12 +13,10 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-namespace rev
-{
+namespace rev {
 class Scene;
 
-class SceneView
-{
+class SceneView {
 public:
   SceneView();
   void setScene(std::shared_ptr<Scene>);
@@ -37,30 +35,14 @@ private:
   RectSize<GLsizei> _outputSize;
   ProgramResource _lightingProgram;
 
-  struct WorldSpaceNormalProperty
-  {
-  };
-  struct WorldSpacePositionProperty
-  {
-  };
-  struct AmbientMaterialProperty
-  {
-  };
-  struct EmissiveMaterialProperty
-  {
-  };
-  struct DiffuseMaterialProperty
-  {
-  };
-  struct SpecularMaterialProperty
-  {
-  };
-  struct SpecularExponentProperty
-  {
-  };
-  struct DepthProperty
-  {
-  };
+  struct WorldSpaceNormalProperty {};
+  struct WorldSpacePositionProperty {};
+  struct AmbientMaterialProperty {};
+  struct EmissiveMaterialProperty {};
+  struct DiffuseMaterialProperty {};
+  struct SpecularMaterialProperty {};
+  struct SpecularExponentProperty {};
+  struct DepthProperty {};
 
   using WorldSpacePositionAttachment =
       RenderStageAttachment<WorldSpacePositionProperty, GL_COLOR_ATTACHMENT0,
@@ -82,8 +64,7 @@ private:
                             GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE>;
   using SpecularExponentAttachment =
       RenderStageAttachment<SpecularExponentProperty, GL_COLOR_ATTACHMENT6,
-                            GL_R16F, GL_RED,
-                            GL_UNSIGNED_BYTE>;
+                            GL_R16F, GL_RED, GL_UNSIGNED_BYTE>;
   using DepthAttachment =
       RenderStageAttachment<DepthProperty, GL_DEPTH_ATTACHMENT,
                             GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT,
@@ -96,9 +77,7 @@ private:
                   DepthAttachment>;
   GeometryStage _geometryStage;
 
-  struct OutputColorProperty
-  {
-  };
+  struct OutputColorProperty {};
   using OutputColorAttachment =
       RenderStageAttachment<OutputColorProperty, GL_COLOR_ATTACHMENT0,
                             GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE>;

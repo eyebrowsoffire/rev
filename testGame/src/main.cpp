@@ -7,22 +7,21 @@
 #include <rev/Light.h>
 #include <rev/MtlFile.h>
 #include <rev/ObjFile.h>
-#include <rev/physics/Gravity.h>
-#include <rev/physics/Particle.h>
-#include <rev/physics/System.h>
 #include <rev/ProgramFactory.h>
 #include <rev/Scene.h>
 #include <rev/SceneView.h>
 #include <rev/WavefrontHelpers.h>
 #include <rev/Window.h>
+#include <rev/physics/Gravity.h>
+#include <rev/physics/Particle.h>
+#include <rev/physics/System.h>
 
 #include <glm/ext.hpp>
 
 #include <chrono>
 #include <cmath>
 
-namespace
-{
+namespace {
 constexpr glm::vec3 kCubeVertices[] = {
     // Front face
     {-1.0, -1.0, 1.0},
@@ -73,14 +72,12 @@ constexpr glm::vec3 kCubeVertices[] = {
     {1.0, -1.0, 1.0}};
 
 std::vector<glm::vec3>
-buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
-{
+buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices) {
   Expects(vertices.size() % 3 == 0);
   size_t primitiveCount = vertices.size() / 3;
   std::vector<glm::vec3> normals;
   for (size_t primitiveIndex = 0; primitiveIndex < primitiveCount;
-       primitiveIndex++)
-  {
+       primitiveIndex++) {
     size_t vertexIndex = primitiveIndex * 3;
     glm::vec3 edge1 = vertices[vertexIndex] - vertices[vertexIndex + 1];
     glm::vec3 edge2 = vertices[vertexIndex + 2] - vertices[vertexIndex + 1];
@@ -94,14 +91,12 @@ buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
   return normals;
 }
 
-class RotatingCameraController : public rev::IActor
-{
+class RotatingCameraController : public rev::IActor {
 public:
   RotatingCameraController(std::shared_ptr<rev::Camera> camera)
       : _camera(std::move(camera)) {}
 
-  void tick(rev::Environment &environment, rev::Duration) override
-  {
+  void tick(rev::Environment &environment, rev::Duration) override {
     using FloatSeconds = std::chrono::duration<float>;
 
     constexpr float radius = 2.0f;
@@ -122,8 +117,7 @@ private:
 
 class UserCameraController : public rev::IMouseListener,
                              public rev::IKeyboardListener,
-                             public rev::IActor
-{
+                             public rev::IActor {
 public:
   UserCameraController(std::shared_ptr<rev::Camera> camera,
                        const rev::Point<double> &initialPosition)
@@ -134,8 +128,7 @@ public:
 
   void buttonReleased(rev::MouseButton) override {}
 
-  void moved(rev::Point<double> position) override
-  {
+  void moved(rev::Point<double> position) override {
     constexpr float sensitivity = 0.01f;
     float xDelta =
         static_cast<float>(position.x - _lastPosition.x) * sensitivity;
@@ -165,10 +158,8 @@ public:
 
   void scrolled(double, double) override {}
 
-  void keyPressed(rev::KeyboardKey key) override
-  {
-    switch (key)
-    {
+  void keyPressed(rev::KeyboardKey key) override {
+    switch (key) {
     case rev::KeyboardKey::W:
       _zSpeed += 1.0f;
       break;
@@ -186,10 +177,8 @@ public:
     }
   }
 
-  void keyReleased(rev::KeyboardKey key) override
-  {
-    switch (key)
-    {
+  void keyReleased(rev::KeyboardKey key) override {
+    switch (key) {
     case rev::KeyboardKey::W:
       _zSpeed -= 1.0f;
       break;
@@ -207,10 +196,8 @@ public:
     }
   }
 
-  void tick(rev::Environment &, rev::Duration elapsedTime) override
-  {
-    if ((abs(_zSpeed) <= 0.01f) && (abs(_xSpeed) <= 0.01f))
-    {
+  void tick(rev::Environment &, rev::Duration elapsedTime) override {
+    if ((abs(_zSpeed) <= 0.01f) && (abs(_xSpeed) <= 0.01f)) {
       return;
     }
 
@@ -218,13 +205,16 @@ public:
 
     glm::vec4 movementDirection = glm::vec4(_xSpeed, 0.0f, -_zSpeed, 0.0f);
 
-    movementDirection = glm::inverse(_camera->getViewMatrix()) * movementDirection;
+    movementDirection =
+        glm::inverse(_camera->getViewMatrix()) * movementDirection;
 
-    glm::vec3 movementVector(movementDirection.x, movementDirection.y, movementDirection.z);
+    glm::vec3 movementVector(movementDirection.x, movementDirection.y,
+                             movementDirection.z);
     movementVector = glm::normalize(movementVector);
 
     constexpr float speedFactor = 9.0f;
-    movementVector *= speedFactor * static_cast<FloatSeconds>(elapsedTime).count();
+    movementVector *=
+        speedFactor * static_cast<FloatSeconds>(elapsedTime).count();
 
     auto position = _camera->getPosition();
     auto target = _camera->getTarget();
@@ -241,29 +231,25 @@ private:
   float _xSpeed;
 };
 
-class BikeController : public rev::IActor, public rev::IKeyboardListener
-{
+class BikeController : public rev::IActor, public rev::IKeyboardListener {
 public:
-  BikeController(std::shared_ptr<rev::physics::Particle> particle, std::shared_ptr<rev::CompositeObject> sceneObject)
-  : _particle(std::move(particle))
-  , _sceneObject(std::move(sceneObject))
-  {
+  BikeController(std::shared_ptr<rev::physics::Particle> particle,
+                 std::shared_ptr<rev::CompositeObject> sceneObject)
+      : _particle(std::move(particle)), _sceneObject(std::move(sceneObject)) {
     Expects(_particle != nullptr);
     Expects(_sceneObject != nullptr);
   }
 
-  void tick(rev::Environment &, rev::Duration elapsedTime) override
-  {
-    if(_thrustersOn)
-    {
+  void tick(rev::Environment &, rev::Duration elapsedTime) override {
+    if (_thrustersOn) {
       rev::physics::Force<glm::vec3> force(0.0f, 7000.0f, 0.0f);
 
-      _particle->addImpulse(force * rev::physics::durationToPhysicsTime(elapsedTime));
+      _particle->addImpulse(force *
+                            rev::physics::durationToPhysicsTime(elapsedTime));
     }
 
     const auto &currentPosition = _particle->getPosition().getValue();
-    if(currentPosition.y < 0.0f)
-    {
+    if (currentPosition.y < 0.0f) {
       auto newPosition = currentPosition;
       newPosition.y = 0.0f;
       _particle->setPosition(newPosition);
@@ -274,25 +260,20 @@ public:
     }
 
     glm::mat4 identity;
-    _sceneObject->transform = glm::translate(identity, _particle->getPosition().getValue());
+    _sceneObject->transform =
+        glm::translate(identity, _particle->getPosition().getValue());
   }
 
-  void kill(rev::Environment &environment) override
-  {
-  }
+  void kill(rev::Environment &environment) override {}
 
-  void keyPressed(rev::KeyboardKey key) override
-  {
-    if (key == rev::KeyboardKey::Space)
-    {
+  void keyPressed(rev::KeyboardKey key) override {
+    if (key == rev::KeyboardKey::Space) {
       _thrustersOn = true;
     }
   }
 
-  void keyReleased(rev::KeyboardKey key) override
-  {
-    if (key == rev::KeyboardKey::Space)
-    {
+  void keyReleased(rev::KeyboardKey key) override {
+    if (key == rev::KeyboardKey::Space) {
       _thrustersOn = false;
     }
   }
@@ -305,8 +286,7 @@ private:
 
 } // namespace
 
-int main(void)
-{
+int main(void) {
   rev::Engine engine;
   auto window = engine.createWindow("Test Game", {1280, 720});
   window->makeCurrent();
@@ -325,7 +305,8 @@ int main(void)
   rev::ObjFile meshFile("assets/hoverbike.obj");
   rev::MtlFile materialsFile("assets/hoverbike.mtl");
   rev::ProgramFactory factory;
-  auto objectGroup = rev::createObjectGroupFromWavefrontFiles(factory, meshFile, materialsFile);
+  auto objectGroup = rev::createObjectGroupFromWavefrontFiles(factory, meshFile,
+                                                              materialsFile);
   auto object = objectGroup->addObject();
   scene->addObjectGroup(objectGroup);
 
@@ -369,8 +350,7 @@ int main(void)
 
   environment->play();
 
-  while (!window->wantsClose())
-  {
+  while (!window->wantsClose()) {
     engine.update();
   }
   return 0;

@@ -4,16 +4,14 @@
 #include <memory>
 #include <string>
 
-namespace rev
-{
+namespace rev {
 
 class IKeyboardListener;
 class IMouseListener;
 class SceneView;
 struct WindowData;
 
-class Window
-{
+class Window {
 public:
   ~Window();
 
@@ -28,7 +26,7 @@ public:
 
 private:
   void updateAspect();
-  
+
   std::unique_ptr<WindowData> _data;
 };
 

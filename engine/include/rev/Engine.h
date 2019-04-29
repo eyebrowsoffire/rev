@@ -3,22 +3,21 @@
 #include "Types.h"
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace rev
-{
+namespace rev {
 class Environment;
 class Scene;
 class SceneView;
 class Window;
 
-class Engine
-{
+class Engine {
 public:
   std::shared_ptr<Scene> createScene();
   std::shared_ptr<SceneView> createSceneView();
-  std::shared_ptr<Window> createWindow(const std::string &title, const RectSize<int> size);
+  std::shared_ptr<Window> createWindow(const std::string &title,
+                                       const RectSize<int> size);
   std::shared_ptr<Environment> createEnvironment();
 
   void update();

@@ -7,17 +7,14 @@
 #include <string_view>
 #include <vector>
 
-namespace rev
-{
+namespace rev {
 class IndexedModel;
 
-class ObjFile
-{
+class ObjFile {
 public:
   ObjFile(const std::string &path);
 
-  struct WavefrontObject
-  {
+  struct WavefrontObject {
     std::string materialName;
 
     using IndexedTriangle = std::array<glm::uvec3, 3>;
