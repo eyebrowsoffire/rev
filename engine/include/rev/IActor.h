@@ -9,10 +9,10 @@ class Environment;
 
 class IActor {
 public:
-  ~IActor() = default;
+    ~IActor() = default;
 
-  virtual void tick(Environment &environment, Duration elapsedTime) = 0;
-  virtual void kill(Environment &environment) = 0;
+    virtual void tick(Environment& environment, Duration elapsedTime) = 0;
+    virtual void kill(Environment& environment) = 0;
 };
 
 } // namespace rev

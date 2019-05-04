@@ -14,17 +14,17 @@ class Window;
 
 class Engine {
 public:
-  std::shared_ptr<Scene> createScene();
-  std::shared_ptr<SceneView> createSceneView();
-  std::shared_ptr<Window> createWindow(const std::string &title,
-                                       const RectSize<int> size);
-  std::shared_ptr<Environment> createEnvironment();
+    std::shared_ptr<Scene> createScene();
+    std::shared_ptr<SceneView> createSceneView();
+    std::shared_ptr<Window> createWindow(const std::string& title,
+        const RectSize<int> size);
+    std::shared_ptr<Environment> createEnvironment();
 
-  void update();
+    void update();
 
 private:
-  std::shared_ptr<Window> _window;
-  std::vector<std::shared_ptr<Environment>> _environments;
+    std::shared_ptr<Window> _window;
+    std::vector<std::shared_ptr<Environment>> _environments;
 };
 
 } // namespace rev

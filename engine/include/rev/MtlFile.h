@@ -10,14 +10,14 @@
 namespace rev {
 class MtlFile {
 public:
-  MtlFile(const std::string &filePath);
+    MtlFile(const std::string& filePath);
 
-  const MaterialProperties *
-  propertiesForMaterial(const std::string &materialName) const;
+    const MaterialProperties*
+    propertiesForMaterial(const std::string& materialName) const;
 
 private:
-  void commitProperty(const std::string &name,
-                      const MaterialProperties &properties);
-  std::unordered_map<std::string, MaterialProperties> _materialMap;
+    void commitProperty(const std::string& name,
+        const MaterialProperties& properties);
+    std::unordered_map<std::string, MaterialProperties> _materialMap;
 };
 } // namespace rev

@@ -6,7 +6,7 @@
 namespace rev {
 
 using VertexArray = Resource<singleCreate<glGenVertexArrays>,
-                             singleDestroy<glDeleteVertexArrays>>;
+    singleDestroy<glDeleteVertexArrays>>;
 using VertexArrayContext = ResourceContext<VertexArray, glBindVertexArray>;
 
 } // namespace rev

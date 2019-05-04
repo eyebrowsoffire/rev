@@ -10,17 +10,17 @@
 namespace rev::physics {
 class System : public IActor {
 public:
-  System();
+    System();
 
-  // IActor
-  virtual void tick(Environment &environment, Duration elapsedTime) override;
-  virtual void kill(Environment &environment) override;
+    // IActor
+    virtual void tick(Environment& environment, Duration elapsedTime) override;
+    virtual void kill(Environment& environment) override;
 
-  std::shared_ptr<Particle> addParticle();
-  std::shared_ptr<Gravity> getGravity() const;
+    std::shared_ptr<Particle> addParticle();
+    std::shared_ptr<Gravity> getGravity() const;
 
 private:
-  std::vector<std::shared_ptr<Particle>> _particles;
-  std::shared_ptr<Gravity> _gravity;
+    std::vector<std::shared_ptr<Particle>> _particles;
+    std::shared_ptr<Gravity> _gravity;
 };
 } // namespace rev::physics

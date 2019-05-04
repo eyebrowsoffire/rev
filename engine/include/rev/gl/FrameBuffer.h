@@ -9,28 +9,30 @@
 namespace rev {
 
 using FrameBuffer = Resource<singleCreate<glGenFramebuffers>,
-                             singleDestroy<glDeleteFramebuffers>>;
+    singleDestroy<glDeleteFramebuffers>>;
 
 template <GLenum Target>
 class FrameBufferContext
     : public ResourceContext<
           FrameBuffer, enumTargetBindFunction<glBindFramebuffer, Target>> {
 public:
-  using ResourceContext<
-      FrameBuffer,
-      enumTargetBindFunction<glBindFramebuffer, Target>>::ResourceContext;
+    using ResourceContext<
+        FrameBuffer,
+        enumTargetBindFunction<glBindFramebuffer, Target>>::ResourceContext;
 
-  void setTextureAttachment(GLenum attachment, const Texture &texture) {
-    glFramebufferTexture2D(Target, attachment, GL_TEXTURE_2D, texture.getId(),
-                           0);
-  }
+    void setTextureAttachment(GLenum attachment, const Texture& texture)
+    {
+        glFramebufferTexture2D(Target, attachment, GL_TEXTURE_2D, texture.getId(),
+            0);
+    }
 
-  GLint getAttachmentParameter(GLenum parameterName, GLenum attachment) {
-    GLint result;
-    glGetFramebufferAttachmentParameteriv(Target, attachment, parameterName,
-                                          &result);
-    return result;
-  }
+    GLint getAttachmentParameter(GLenum parameterName, GLenum attachment)
+    {
+        GLint result;
+        glGetFramebufferAttachmentParameteriv(Target, attachment, parameterName,
+            &result);
+        return result;
+    }
 };
 
 using ReadFrameBufferContext = FrameBufferContext<GL_READ_FRAMEBUFFER>;

@@ -5,27 +5,28 @@
 
 namespace rev {
 
-using Texture =
-    Resource<singleCreate<glGenTextures>, singleDestroy<glDeleteTextures>>;
+using Texture = Resource<singleCreate<glGenTextures>, singleDestroy<glDeleteTextures>>;
 
 template <GLenum target>
 class TextureContext
     : public ResourceContext<Texture,
-                             enumTargetBindFunction<glBindTexture, target>> {
+          enumTargetBindFunction<glBindTexture, target>> {
 public:
-  using ResourceContext<
-      Texture, enumTargetBindFunction<glBindTexture, target>>::ResourceContext;
+    using ResourceContext<
+        Texture, enumTargetBindFunction<glBindTexture, target>>::ResourceContext;
 
-  void setParameter(GLenum name, GLint value) {
-    glTexParameteri(target, name, value);
-  }
+    void setParameter(GLenum name, GLint value)
+    {
+        glTexParameteri(target, name, value);
+    }
 
-  void setImage(GLint level, GLenum internalFormat, GLsizei width,
-                GLsizei height, GLint border, GLenum format, GLenum type,
-                const void *pixels) {
-    glTexImage2D(target, level, internalFormat, width, height, border, format,
-                 type, pixels);
-  }
+    void setImage(GLint level, GLenum internalFormat, GLsizei width,
+        GLsizei height, GLint border, GLenum format, GLenum type,
+        const void* pixels)
+    {
+        glTexImage2D(target, level, internalFormat, width, height, border, format,
+            type, pixels);
+    }
 };
 
 using Texture2DContext = TextureContext<GL_TEXTURE_2D>;

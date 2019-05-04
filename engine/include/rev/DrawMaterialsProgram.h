@@ -7,34 +7,36 @@
 namespace rev {
 class DrawMaterialsProgram {
 public:
-  DrawMaterialsProgram(ProgramResource resource)
-      : _programResource(std::move(resource)) {
-    model = _programResource.getUniform<glm::mat4>("model");
-    view = _programResource.getUniform<glm::mat4>("view");
-    projection = _programResource.getUniform<glm::mat4>("projection");
+    DrawMaterialsProgram(ProgramResource resource)
+        : _programResource(std::move(resource))
+    {
+        model = _programResource.getUniform<glm::mat4>("model");
+        view = _programResource.getUniform<glm::mat4>("view");
+        projection = _programResource.getUniform<glm::mat4>("projection");
 
-    ambient = _programResource.getUniform<glm::vec3>("fAmbient");
-    emissive = _programResource.getUniform<glm::vec3>("fEmissive");
-    diffuse = _programResource.getUniform<glm::vec3>("fDiffuse");
-    specular = _programResource.getUniform<glm::vec3>("fSpecular");
-    specularExponent = _programResource.getUniform<float>("fSpecularExponent");
-  }
+        ambient = _programResource.getUniform<glm::vec3>("fAmbient");
+        emissive = _programResource.getUniform<glm::vec3>("fEmissive");
+        diffuse = _programResource.getUniform<glm::vec3>("fDiffuse");
+        specular = _programResource.getUniform<glm::vec3>("fSpecular");
+        specularExponent = _programResource.getUniform<float>("fSpecularExponent");
+    }
 
-  ProgramContext prepareContext() { return ProgramContext(_programResource); }
+    ProgramContext prepareContext() { return ProgramContext(_programResource); }
 
-  Uniform<glm::mat4> model;
-  Uniform<glm::mat4> view;
-  Uniform<glm::mat4> projection;
+    Uniform<glm::mat4> model;
+    Uniform<glm::mat4> view;
+    Uniform<glm::mat4> projection;
 
-  Uniform<glm::vec3> ambient;
-  Uniform<glm::vec3> emissive;
-  Uniform<glm::vec3> diffuse;
-  Uniform<glm::vec3> specular;
-  Uniform<float> specularExponent;
+    Uniform<glm::vec3> ambient;
+    Uniform<glm::vec3> emissive;
+    Uniform<glm::vec3> diffuse;
+    Uniform<glm::vec3> specular;
+    Uniform<float> specularExponent;
 
-  struct Source {
-    static std::string_view getVertexSource() {
-      return R"vertexShader(
+    struct Source {
+        static std::string_view getVertexSource()
+        {
+            return R"vertexShader(
                 #version 330 core
 
                 layout(location = 0) in vec3 vPosition;
@@ -57,10 +59,11 @@ public:
                     fPosition = worldSpacePosition.xyz;
                 }
             )vertexShader";
-    }
+        }
 
-    static std::string_view getFragmentSource() {
-      return R"fragmentShader(
+        static std::string_view getFragmentSource()
+        {
+            return R"fragmentShader(
                 #version 330 core
 
                 in vec3 fPosition;
@@ -93,11 +96,11 @@ public:
                     specularExponent = fSpecularExponent;
                 }
             )fragmentShader";
-    }
-  };
+        }
+    };
 
 private:
-  ProgramResource _programResource;
+    ProgramResource _programResource;
 };
 
 } // namespace rev

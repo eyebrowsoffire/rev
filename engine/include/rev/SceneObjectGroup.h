@@ -10,8 +10,8 @@ namespace rev {
 // the group.
 class ISceneObjectGroup {
 public:
-  ~ISceneObjectGroup() = default;
-  virtual void render(Camera &camera) = 0;
+    ~ISceneObjectGroup() = default;
+    virtual void render(Camera& camera) = 0;
 };
 
 // Models conform to the following contract:
@@ -30,30 +30,34 @@ public:
 template <typename ModelType>
 class SceneObjectGroup : public ISceneObjectGroup {
 public:
-  using SceneObjectType = typename ModelType::SceneObjectType;
+    using SceneObjectType = typename ModelType::SceneObjectType;
 
-  // SceneObjectGroup is constructed from the arguments for its model. The model
-  // is created on construction from the arguments.
-  template <typename... Args>
-  SceneObjectGroup(Args &&... args) : _model(std::forward<Args>(args)...) {}
+    // SceneObjectGroup is constructed from the arguments for its model. The model
+    // is created on construction from the arguments.
+    template <typename... Args>
+    SceneObjectGroup(Args&&... args)
+        : _model(std::forward<Args>(args)...)
+    {
+    }
 
-  // Renders all the objects in the group. Used by the rendering engine.
-  void render(Camera &camera) override { _model.render(camera, _objects); }
+    // Renders all the objects in the group. Used by the rendering engine.
+    void render(Camera& camera) override { _model.render(camera, _objects); }
 
-  // Creates a new object, adds it to the group, and returns it.
-  // TODO: Maybe this should take arguments, that it should forward to the
-  // constructor of the SceneObjectType?
-  std::shared_ptr<SceneObjectType> addObject() {
-    auto object = std::make_shared<SceneObjectType>();
-    _objects.push_back(object);
+    // Creates a new object, adds it to the group, and returns it.
+    // TODO: Maybe this should take arguments, that it should forward to the
+    // constructor of the SceneObjectType?
+    std::shared_ptr<SceneObjectType> addObject()
+    {
+        auto object = std::make_shared<SceneObjectType>();
+        _objects.push_back(object);
 
-    return std::move(object);
-  }
+        return std::move(object);
+    }
 
-  // TODO: write removeObject();
+    // TODO: write removeObject();
 
 private:
-  ModelType _model;
-  std::vector<std::shared_ptr<SceneObjectType>> _objects;
+    ModelType _model;
+    std::vector<std::shared_ptr<SceneObjectType>> _objects;
 };
 } // namespace rev

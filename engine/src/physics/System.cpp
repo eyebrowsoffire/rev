@@ -2,25 +2,30 @@
 
 namespace rev::physics {
 
-System::System() : _gravity(std::make_shared<Gravity>()) {}
-
-void System::tick(Environment &environment, Duration elapsedTime) {
-  auto physicsTime = durationToPhysicsTime(elapsedTime);
-  _gravity->applyGravity(physicsTime);
-
-  for (const auto &particle : _particles) {
-    particle->flushImpulses();
-    particle->updatePosition(physicsTime);
-  }
+System::System()
+    : _gravity(std::make_shared<Gravity>())
+{
 }
 
-void System::kill(Environment &environment) {}
+void System::tick(Environment& environment, Duration elapsedTime)
+{
+    auto physicsTime = durationToPhysicsTime(elapsedTime);
+    _gravity->applyGravity(physicsTime);
 
-std::shared_ptr<Particle> System::addParticle() {
-  auto particle = std::make_shared<Particle>();
-  _particles.push_back(particle);
+    for (const auto& particle : _particles) {
+        particle->flushImpulses();
+        particle->updatePosition(physicsTime);
+    }
+}
 
-  return std::move(particle);
+void System::kill(Environment& environment) {}
+
+std::shared_ptr<Particle> System::addParticle()
+{
+    auto particle = std::make_shared<Particle>();
+    _particles.push_back(particle);
+
+    return std::move(particle);
 }
 
 std::shared_ptr<Gravity> System::getGravity() const { return _gravity; }
