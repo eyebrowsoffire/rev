@@ -27,6 +27,7 @@ target_sources(revEngine PRIVATE
   include/rev/Scene.h
   include/rev/SceneObjectGroup.h
   include/rev/SceneView.h
+  include/rev/TrackModel.h
   include/rev/Types.h
   include/rev/Unit.h
   include/rev/Utilities.h

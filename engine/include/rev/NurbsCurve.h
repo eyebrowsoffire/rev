@@ -33,6 +33,16 @@ public:
         Expects(knots.size() == (controlPoints.size() + order));
     }
 
+    ValueType getStart() const
+    {
+        return _knots.front();
+    }
+
+    ValueType getEnd() const
+    {
+        return _knots.back();
+    }
+
     PointType operator[](ValueType position) const
     {
         auto knotsBegin = _knots.begin();
