@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rev/gl/ProgramResource.h"
+#include "rev/MaterialProperties.h"
 
 #include <glm/glm.hpp>
 
@@ -22,6 +23,15 @@ public:
     }
 
     ProgramContext prepareContext() { return ProgramContext(_programResource); }
+
+    void applyMaterialProperties(const MaterialProperties& props)
+    {
+        ambient.set(props.ambientColor);
+        emissive.set(props.emissiveColor);
+        diffuse.set(props.diffuseColor);
+        specular.set(props.specularColor);
+        specularExponent.set(props.specularExponent);
+    }
 
     Uniform<glm::mat4> model;
     Uniform<glm::mat4> view;

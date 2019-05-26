@@ -1,33 +1,30 @@
 #pragma once
 
-#include "rev/IModel.h"
+#include "rev/DrawMaterialsProgram.h"
+#include "rev/Camera.h"
+#include "rev/Mesh.h"
 #include "rev/NurbsCurve.h"
 #include "rev/gl/Buffer.h"
 
+#include <vector>
+
 namespace rev {
-class TrackModel : public IModel {
+
+class ProgramFactory;
+
+struct TrackObject {
+};
+
+class TrackModel {
 public:
-    TrackModel(const NurbsCurve<glm::vec3>& curve, float width, size_t segments)
-    {
-        VertexArrayContext vertexContext(_vao);
-        ArrayBufferContext arrayBufferContext(_vertices);
+    using SceneObjectType = TrackObject;
+    
+    TrackModel(ProgramFactory &factory, const NurbsCurve<glm::vec3>& curve, float width, size_t segments);
 
-        float start = curve.getStart();
-        float end = curve.getEnd();
-        float curveLength = end - start;
-        float segmentLength = curveLength / static_cast<float>(segments);
-    }
-
-    virtual VertexArrayContext getVertexArrayContext()
-    {
-        return VertexArrayContext(_vao);
-    }
-    virtual void draw() = 0;
+    void render(Camera& camera, gsl::span<std::shared_ptr<TrackObject>> objects);
 
 private:
-    VertexArray _vao;
-    Buffer _vertices;
-    Buffer _indexes;
-    size_t _vertexCount;
+    std::shared_ptr<DrawMaterialsProgram> _program;
+    Mesh _trackMesh;
 };
 }; // namespace rev

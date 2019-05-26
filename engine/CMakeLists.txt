@@ -11,10 +11,10 @@ target_sources(revEngine PRIVATE
   include/rev/Environment.h
   include/rev/IActor.h
   include/rev/IKeyboardListener.h
-  include/rev/IModel.h
   include/rev/IntegerSequenceUtilities.h
   include/rev/Light.h
   include/rev/MaterialProperties.h
+  include/rev/Mesh.h
   include/rev/MtlFile.h
   include/rev/ObjFile.h
   include/rev/NurbsCurve.h
@@ -55,6 +55,7 @@ target_sources(revEngine PRIVATE
   src/physics/System.cpp
   src/Scene.cpp
   src/SceneView.cpp
+  src/TrackModel.cpp
   src/WavefrontHelpers.cpp
   src/Window.cpp
 )

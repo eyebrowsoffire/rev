@@ -1,6 +1,5 @@
 #include "rev/Scene.h"
 
-#include "rev/IModel.h"
 #include "rev/Light.h"
 
 namespace rev {

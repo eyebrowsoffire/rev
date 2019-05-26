@@ -11,7 +11,6 @@
 
 namespace rev {
 class Light;
-class IModel;
 class SceneObject;
 
 class Scene {

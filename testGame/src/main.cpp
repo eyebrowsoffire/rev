@@ -6,10 +6,12 @@
 #include <rev/IMouseListener.h>
 #include <rev/Light.h>
 #include <rev/MtlFile.h>
+#include <rev/NurbsCurve.h>
 #include <rev/ObjFile.h>
 #include <rev/ProgramFactory.h>
 #include <rev/Scene.h>
 #include <rev/SceneView.h>
+#include <rev/TrackModel.h>
 #include <rev/WavefrontHelpers.h>
 #include <rev/Window.h>
 #include <rev/physics/Gravity.h>
@@ -20,6 +22,8 @@
 
 #include <chrono>
 #include <cmath>
+
+using namespace rev;
 
 namespace {
 constexpr glm::vec3 kCubeVertices[] = {
@@ -319,6 +323,55 @@ int main(void)
         materialsFile);
     auto object = objectGroup->addObject();
     scene->addObjectGroup(objectGroup);
+
+    float width = 3.0f;
+    size_t segmentCount = 100;
+    float halfRoot2 = sqrt(2.0f) / 2.0f;
+    WeightedControlPoint<glm::vec3> controlPoints[] = {
+        // Wide 90 degree turn
+        { { -20.0f, 0.0f, 0.0f }, 1.0f },
+        { { -20.0f, 0.0f, 20.0f }, halfRoot2 },
+        { { 0.0, 0.0f, 20.0f }, 1.0f },
+
+        // Straight line
+        { { 50.0f, 0.0f, 20.0f }, 1.0f },
+
+        // Right 180 degree turn, climbing uphill
+        { { 60.0f, 10.0f, 20.0f }, halfRoot2 },
+        { { 60.0f, 10.0f, 10.0f }, 1.0f },
+        { { 60.0f, 20.0f, 0.0f }, halfRoot2 },
+        { { 50.0f, 20.0f, 0.0f }, 1.0f },
+
+        // Some sort of curvy line back toward the start
+        { { 20.0f, 20.0f, 0.0f }, 1.0f },
+        { { 0.0f, 0.0f, -20.0f }, 1.0f },
+
+        // Wide 90 degree turn back to the start
+        { { -20.0f, 0.0f, -20.0f }, halfRoot2 },
+        { { -20.0f, 0.0f, 0.0f }, 1.0f },
+    };
+    float knots[] = {
+        0.0,
+        0.0,
+        0.0,
+        0.1,
+        0.1,
+        0.1,
+        0.2,
+        0.2,
+        0.3,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.6,
+        0.6,
+    };
+
+    NurbsCurve<glm::vec3> curve(3, knots, controlPoints);
+
+    auto trackGroup = std::make_shared<rev::SceneObjectGroup<rev::TrackModel>>(factory, curve, width, segmentCount);
+    scene->addObjectGroup(trackGroup);
 
     auto physicsSystem = std::make_shared<rev::physics::System>();
     auto bikeParticle = physicsSystem->addParticle();
