@@ -5,6 +5,7 @@ target_compile_features(revTests PRIVATE cxx_std_17)
 target_sources(revTests PRIVATE
   IntegerSequenceUtilitiesTests.cpp
   NurbsCurveTests.cpp
+  SurfaceMapTests.cpp
   UnitUnitTests.cpp
 )
 

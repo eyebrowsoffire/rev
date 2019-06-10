@@ -1,5 +1,5 @@
 ﻿---
 BasedOnStyle: WebKit
 AlwaysBreakTemplateDeclarations: 'true'
-
+ColumnLimit: 100
 ...
