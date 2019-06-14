@@ -18,22 +18,25 @@ target_sources(revEngine PRIVATE
   include/rev/MtlFile.h
   include/rev/ObjFile.h
   include/rev/NurbsCurve.h
-  include/rev/physics/Gravity.h
-  include/rev/physics/Particle.h
-  include/rev/physics/PhysicsUnits.h
-  include/rev/physics/System.h
   include/rev/ProgramFactory.h
   include/rev/RenderStage.h
   include/rev/Scene.h
   include/rev/SceneObjectGroup.h
   include/rev/SceneView.h
-  include/rev/SurfaceMap.h
   include/rev/TrackModel.h
   include/rev/Types.h
   include/rev/Unit.h
   include/rev/Utilities.h
   include/rev/WavefrontHelpers.h
   include/rev/Window.h
+
+  include/rev/geometry/KDTree.h
+  include/rev/geometry/Polygons.h
+
+  include/rev/physics/Gravity.h
+  include/rev/physics/Particle.h
+  include/rev/physics/PhysicsUnits.h
+  include/rev/physics/System.h
 
   include/rev/gl/Buffer.h
   include/rev/gl/Context.h

@@ -1,99 +1,17 @@
 #pragma once
 
 #include "rev/Utilities.h"
+#include "rev/geometry/Polygons.h"
 #include <array>
 #include <glm/glm.hpp>
 #include <gsl/gsl_assert>
 #include <limits>
 #include <set>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
 namespace rev {
-
-struct AxisAlignedPlane {
-    uint8_t dimensionIndex;
-    float boundary;
-};
-
-struct AxisAlignedBoundingBox {
-    void expandToVertex(const glm::vec3& vertex)
-    {
-        for (int k = 0; k < 3; k++) {
-            if (vertex[k] < minimum[k]) {
-                minimum[k] = vertex[k];
-            }
-            if (vertex[k] > maximum[k]) {
-                maximum[k] = vertex[k];
-            }
-        }
-    }
-
-    void expandToBox(const AxisAlignedBoundingBox& other)
-    {
-        for (int k = 0; k < 3; k++) {
-            if (other.minimum[k] < minimum[k]) {
-                minimum[k] = other.minimum[k];
-            }
-            if (other.maximum[k] > maximum[k]) {
-                maximum[k] = other.maximum[k];
-            }
-        }
-    }
-
-    float getSurfaceArea() const
-    {
-        glm::vec3 diagonal = maximum - minimum;
-        float surfaceArea = 0.0f;
-        surfaceArea += diagonal.x * diagonal.y;
-        surfaceArea += diagonal.y * diagonal.z;
-        surfaceArea += diagonal.z * diagonal.z;
-
-        return 2.0f * surfaceArea;
-    }
-
-    std::pair<AxisAlignedBoundingBox, AxisAlignedBoundingBox> split(
-        const AxisAlignedPlane& plane) const
-    {
-        Expects(!(plane.boundary < minimum[plane.dimensionIndex]));
-        Expects(!(plane.boundary > maximum[plane.dimensionIndex]));
-
-        std::pair<AxisAlignedBoundingBox, AxisAlignedBoundingBox> splitBoxes{ *this, *this };
-        splitBoxes.first.maximum[plane.dimensionIndex] = plane.boundary;
-        splitBoxes.second.minimum[plane.dimensionIndex] = plane.boundary;
-
-        return splitBoxes;
-    }
-
-    glm::vec3 minimum{ std::numeric_limits<float>::infinity() };
-    glm::vec3 maximum{ -std::numeric_limits<float>::infinity() };
-};
-
-template <typename SegmentVisitor>
-void iteratePolygonVertices(gsl::span<glm::vec3> vertices, SegmentVisitor&& visitor)
-{
-    Expects(vertices.size() >= 3);
-    size_t vertexCount = vertices.size();
-    size_t i = 0;
-    size_t j = 1;
-    while (i < vertexCount) {
-        if (j == vertexCount) {
-            j = 0;
-        }
-        visitor(vertices[i], vertices[j]);
-        i++;
-        j++;
-    }
-}
-
-glm::vec3 intersect(const glm::vec3& first, const glm::vec3& second, const AxisAlignedPlane& plane)
-{
-    
-    for (size_t k; k < 3; k++) {
-        if (k == plane.dimensionIndex) {
-        }
-    }
-}
 
 template <typename SurfaceData>
 struct Triangle {
@@ -107,29 +25,6 @@ struct Triangle {
             box.expandToVertex(vertex);
         }
         return box;
-    }
-
-    AxisAlignedBoundingBox getClippedBoundingBox(const AxisAlignedBoundingBox& clipBox) const
-    {
-        std::vector<glm::vec3> oldVertices = vertices;
-        std::vector<glm::vec3> newVertices;
-        iteratePolygonVertices(
-            oldVertices, [&newVertices](const glm::vec3& first, const glm::vec3& second) {
-                bool firstOutside = (first.x < clipbox.minimum.x);
-                bool secondOutside = (second.x < clipbox.minimum.x);
-                if (!firstOutside) {
-                    newVertices.push_back(first);
-                }
-
-                if (firstOutside != secondOutside) {
-                }
-                if (first < clipBox.minimum.x) {
-                    if (!(second < clipBox.minimum.x)) {
-                    }
-                } else {
-                    newVertices.push_back(first);
-                }
-            });
     }
 };
 
@@ -244,7 +139,8 @@ private:
     std::unique_ptr<MapNode<SurfaceData>> createNode(const AxisAlignedBoundingBox& box,
         std::set<Event> events, std::unordered_set<Triangle<SurfaceData>*> triangles)
     {
-        auto [plane, side, cost] = findBestSplit(box, events, triangles.size());
+        size_t triangleCount = triangles.size();
+        auto [plane, side, cost] = findBestSplit(box, events, triangleCount);
         float terminateCost = static_cast<float>(triangleCount) * kIntersectionCost;
         if (terminateCost > cost) {
             std::unordered_set<Triangle<SurfaceData>*> leftTriangles;
