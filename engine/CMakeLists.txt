@@ -31,7 +31,7 @@ target_sources(revEngine PRIVATE
   include/rev/Window.h
 
   include/rev/geometry/KDTree.h
-  include/rev/geometry/Polygons.h
+  include/rev/geometry/Tools.h
 
   include/rev/physics/Gravity.h
   include/rev/physics/Particle.h

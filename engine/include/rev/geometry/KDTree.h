@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rev/Utilities.h"
-#include "rev/geometry/Polygons.h"
+#include "rev/geometry/Tools.h"
 #include <array>
 #include <glm/glm.hpp>
 #include <gsl/gsl_assert>
@@ -26,6 +26,62 @@ struct Triangle {
         }
         return box;
     }
+
+    std::array<AxisAlignedBoundingBox, 2> clipAndSplitBoundingBoxes(
+        const AxisAlignedBoundingBox& clipBox, const AxisAlignedPlane& splitPlane)
+    {
+        // Alternate between these two buffers for input and output
+        std::array<glm::vec3, 9> buf1{};
+        std::array<glm::vec3, 9> buf2{};
+
+        // Fill the input buffer
+        for (int i = 0; i < 3; i++) {
+            buf1[i] = vertices[i];
+        }
+
+        // Clip the triangle by all sides of our bounding box
+        auto inputIter = buf1.begin();
+        auto inputEnd = inputIter + 3;
+        auto outputIter = buf2.begin();
+
+        // First the min planes in each dimension
+        for (uint8_t dim = 0; dim < 3; dim++) {
+            gsl::span<glm::vec3> inputRange(inputIter, inputEnd);
+            OutputIteratorPolygonBuilder builder(outputIter);
+            AxisAlignedPlane boundary = { dim, clipBox.minimum[dim] };
+            boundary.splitConvexPolygon(inputRange, NullPolygonBuilder(), builder);
+
+            std::swap(inputIter, outputIter);
+            inputEnd = builder.getIterator();
+        }
+
+        // Now the max planes in each dimension
+        for (uint8_t dim = 0; dim < 3; dim++) {
+            gsl::span<glm::vec3> inputRange(inputIter, inputEnd);
+            OutputIteratorPolygonBuilder builder(outputIter);
+            AxisAlignedPlane boundary = { dim, clipBox.maximum[dim] };
+            boundary.splitConvexPolygon(inputRange, builder, NullPolygonBuilder());
+
+            std::swap(inputIter, outputIter);
+            inputEnd = builder.getIterator();
+        }
+
+        // Finally split into left and right polygon via the split plane
+        std::array<glm::vec3, 9> leftVertices;
+        std::array<glm::vec3, 9> rightVertices;
+        gsl::span<glm::vec3> inputRange(inputIter, inputEnd);
+
+        OutputIteratorPolygonBuilder leftBuilder(leftVertices.begin());
+        OutputIteratorPolygonBuilder rightBuilder(rightVertices.begin());
+        splitPlane.splitConvexPolygon(inputRange, leftBuilder, rightBuilder);
+
+        gsl::span<glm::vec3> leftRange(leftVertices.begin(), leftBuilder.getIterator());
+        gsl::span<glm::vec3> rightRange(rightVertices.begin(), leftBuilder.getIterator());
+        return std::array<AxisAlignedBoundingBox, 2>{
+            smallestBoxContainingVertices(leftRange),
+            smallestBoxContainingVertices(rightRange),
+        };
+    }
 };
 
 template <typename SurfaceData>
@@ -33,14 +89,13 @@ struct LeafNode {
     std::unordered_set<Triangle<SurfaceData>*> triangles;
 };
 
-template <typename SurfaceData, size_t axisIndex>
+template <typename SurfaceData>
 struct BranchNode;
 
 template <typename SurfaceData>
-using MapNode = std::variant<LeafNode<SurfaceData>, BranchNode<SurfaceData, 0>,
-    BranchNode<SurfaceData, 1>, BranchNode<SurfaceData, 2>>;
+using MapNode = std::variant<LeafNode<SurfaceData>, BranchNode<SurfaceData>>;
 
-template <typename SurfaceData, size_t axisIndex>
+template <typename SurfaceData>
 struct BranchNode {
     AxisAlignedPlane split;
 
@@ -49,9 +104,9 @@ struct BranchNode {
 };
 
 template <typename SurfaceData>
-class SurfaceMap {
+class KDTree {
 public:
-    SurfaceMap(std::vector<std::unique_ptr<Triangle<SurfaceData>>> triangles,
+    KDTree(std::vector<std::unique_ptr<Triangle<SurfaceData>>> triangles,
         std::unique_ptr<MapNode<SurfaceData>> root, const AxisAlignedBoundingBox boundingBox)
         : _triangles(std::move(triangles))
         , _root(std::move(root))
@@ -66,43 +121,29 @@ private:
 };
 
 template <typename SurfaceData>
-class SurfaceMapBuilder {
+class KDTreeBuilder {
 public:
     void addTriangle(std::array<glm::vec3, 3> vertices, SurfaceData data)
     {
         auto triangle = std::make_unique<Triangle>({ vertices, data });
-        auto boundingBox = triangle->getBoundingBox();
+        auto boundingBox = smallestBoxContainingVertices(vertices);
         _boundingBox.expandToBox(boundingBox);
 
-        std::set<Event> events;
-        for (int k = 0; k < 3; k++) {
-            float minimum = boundingBox.minimum[k];
-            float maximum = boundingBox.maximum[k];
-            if (minimum < maximum) {
-                events.emplace({ triangle.get(),
-                    AxisAlignedPlane{ static_cast<uint8_t>(k), maximum }, Event::Type::Ending });
-                events.emplace({ triangle.get(),
-                    AxisAlignedPlane{ static_cast<uint8_t>(k), minimum }, Event::Type::Starting });
-            } else {
-                events.emplace({ triangle.get(),
-                    AxisAlignedPlane{ static_cast<uint8_t>(k), minimum }, Event::Type::Planar });
-            }
-        }
-        _events.merge(std::move(events));
+        _events.merge(buildTriangleEvents(boundingBox, triangle));
         _triangles.push_back(std::move(triangle));
     }
 
-    SurfaceMap<SurfaceData> build()
+    KDTree<SurfaceData> build()
     {
         Expects(!_triangles.empty());
         Expects(!_events.empty());
 
         std::unordered_set<Triangle<SurfaceData>*> triangleSet;
         for (const auto& triangle : _triangles) {
-            triangleSet.push_back(triangle.get());
+            triangleSet.insert(triangle.get());
         }
         auto rootNode = createNode(_boundingBox, std::move(_events), triangleSet);
-        return SurfaceMap<SurfaceData>{ std::move(_triangles), std::move(rootNode), _boundingBox };
+        return KDTree<SurfaceData>{ std::move(_triangles), std::move(rootNode), _boundingBox };
     }
 
 private:
@@ -122,11 +163,11 @@ private:
             Starting = 2,
         };
 
-        bool operator<(const SurfaceMapBuilder& other) const
+        bool operator<(const Event& other) const
         {
             auto tuplify = [](const Event& event) {
-                return std::tie(event.separationPlane.boundary, event.separationPlane.dimension,
-                    event.type, event.triangle);
+                return std::tie(event.separationPlane.boundary,
+                    event.separationPlane.dimensionIndex, event.type, event.triangle);
             };
             return tuplify(*this) < tuplify(other);
         }
@@ -154,17 +195,17 @@ private:
 
                 if (eventPlane.boundary < plane.boundary) {
                     if (event.type != Event::Type::Starting) {
-                        triangles.remove(event.triangle);
+                        triangles.erase(event.triangle);
                         leftTriangles.insert(event.triangle);
                     }
                 } else if (eventPlane.boundary > plane.boundary) {
                     if (event.type != Event::Type::Ending) {
-                        triangles.remove(event.triangle);
+                        triangles.erase(event.triangle);
                         rightTriangles.insert(event.triangle);
                     }
                 } else {
                     // On the boundary
-                    triangles.remove(event.triangle);
+                    triangles.erase(event.triangle);
                     switch (event.type) {
                     case Event::Type::Starting:
                         rightTriangles.insert(event.triangle);
@@ -186,23 +227,55 @@ private:
             std::set<Event> leftEvents;
             std::set<Event> rightEvents;
             for (const auto& event : events) {
-                if (leftTriangles.contains(event.triangle)) {
-                    leftEvents.push(event);
-                } else if (rightTriangles.contains(event.triangle)) {
-                    rightEvents.push(event);
+                if (leftTriangles.count(event.triangle)) {
+                    leftEvents.insert(event);
+                } else if (rightTriangles.count(event.triangle)) {
+                    rightEvents.insert(event);
                 }
             }
             events.clear();
 
             // Overlapping triangles remain
             for (const auto& triangle : triangles) {
-                leftTriangles.push(triangle);
-                rightTriangles.push(triangle);
+                auto [leftBox, rightBox] = triangle->clipAndSplitBoundingBoxes(box, plane);
+                for (const auto& event : buildTriangleEvents(leftBox, triangle)) {
+                    leftEvents.insert(event);
+                }
+                for (const auto& event : buildTriangleEvents(rightBox, triangle)) {
+                    rightEvents.insert(event);
+                }
+                leftTriangles.insert(triangle);
+                rightTriangles.insert(triangle);
             }
             triangles.clear();
+
+            auto [leftBox, rightBox] = box.split(plane);
+            return std::make_unique<MapNode<SurfaceData>>(BranchNode<SurfaceData>{
+                plane,
+                createNode(leftBox, std::move(leftEvents), std::move(leftTriangles)),
+                createNode(rightBox, std::move(rightEvents), std::move(rightTriangles)),
+            });
         } else {
-            return std::make_unique<MapNode<SurfaceData>>(LeafNode{ std::move(triangles) });
+            return std::make_unique<MapNode<SurfaceData>>(
+                LeafNode<SurfaceData>{ std::move(triangles) });
         }
+    }
+
+    std::set<Event> buildTriangleEvents(
+        const AxisAlignedBoundingBox& boundingBox, Triangle<SurfaceData>* triangle)
+    {
+        std::set<Event> events;
+        for (uint8_t k = 0; k < 3; k++) {
+            float minimum = boundingBox.minimum[k];
+            float maximum = boundingBox.maximum[k];
+            if (minimum < maximum) {
+                events.insert(Event{ triangle, AxisAlignedPlane{ k, maximum }, Event::Type::Ending });
+                events.insert(Event{ triangle, AxisAlignedPlane{ k, minimum }, Event::Type::Starting });
+            } else {
+                events.insert(Event{ triangle, AxisAlignedPlane{ k, minimum }, Event::Type::Planar });
+            }
+        }
+        return events;
     }
 
     std::tuple<AxisAlignedPlane, Side, float> findBestSplit(
@@ -224,8 +297,8 @@ private:
             size_t startingTriangleCount = 0;
             auto validate = [&eventsEnd, &candidatePlane, dimension](const auto& iter) {
                 return (iter != eventsEnd)
-                    && !(iter->separationPlane.candidatePlane.boundary > candidatePlane.boundary)
-                    && (iter->separationPlane.candidatePlane.dimensionIndex == dimension);
+                    && !(iter->separationPlane.boundary > candidatePlane.boundary)
+                    && (iter->separationPlane.dimensionIndex == dimension);
             };
             while (validate(iter) && (iter->type == Event::Type::Ending)) {
                 endingTriangleCount++;
@@ -258,11 +331,11 @@ private:
         const AxisAlignedPlane& splitPlane, size_t leftTriangleCount, size_t planarTriangleCount,
         size_t rightTriangleCount)
     {
-        auto splitBoxes = box.split(splitPlane);
+        auto [leftBox, rightBox] = box.split(splitPlane);
         float boxSurfaceArea = box.getSurfaceArea();
 
-        float leftArea = splitBoxes.first.getSurfaceArea() / boxSurfaceArea;
-        float rightArea = splitBoxes.second.getSurfaceArea() / boxSurfaceArea;
+        float leftArea = leftBox.getSurfaceArea() / boxSurfaceArea;
+        float rightArea = rightBox.getSurfaceArea() / boxSurfaceArea;
 
         auto cost = [leftArea, rightArea](size_t leftTriangleCount, size_t rightTriangleCount) {
             float cost = static_cast<float>(leftTriangleCount) * leftArea

@@ -72,8 +72,8 @@ struct AxisAlignedPlane {
     }
 
     template <typename InputVertexRange, typename LeftBuilder, typename RightBuilder>
-    void splitConvexPolygon(const InputVertexRange& inputVertices, LeftBuilder& leftBuilder,
-        RightBuilder& rightBuilder) const
+    void splitConvexPolygon(const InputVertexRange& inputVertices, LeftBuilder&& leftBuilder,
+        RightBuilder&& rightBuilder) const
     {
         iteratePolygonVertices(
             inputVertices, [this, &leftBuilder, &rightBuilder](const Segment& segment) {
@@ -145,15 +145,14 @@ struct AxisAlignedBoundingBox {
         return 2.0f * surfaceArea;
     }
 
-    std::pair<AxisAlignedBoundingBox, AxisAlignedBoundingBox> split(
-        const AxisAlignedPlane& plane) const
+    std::array<AxisAlignedBoundingBox, 2> split(const AxisAlignedPlane& plane) const
     {
         Expects(!(plane.boundary < minimum[plane.dimensionIndex]));
         Expects(!(plane.boundary > maximum[plane.dimensionIndex]));
 
-        std::pair<AxisAlignedBoundingBox, AxisAlignedBoundingBox> splitBoxes{ *this, *this };
-        splitBoxes.first.maximum[plane.dimensionIndex] = plane.boundary;
-        splitBoxes.second.minimum[plane.dimensionIndex] = plane.boundary;
+        std::array<AxisAlignedBoundingBox, 2> splitBoxes{ *this, *this };
+        splitBoxes[0].maximum[plane.dimensionIndex] = plane.boundary;
+        splitBoxes[1].minimum[plane.dimensionIndex] = plane.boundary;
 
         return splitBoxes;
     }
@@ -161,5 +160,15 @@ struct AxisAlignedBoundingBox {
     glm::vec3 minimum{ std::numeric_limits<float>::infinity() };
     glm::vec3 maximum{ -std::numeric_limits<float>::infinity() };
 };
+
+template <typename VertexRange>
+AxisAlignedBoundingBox smallestBoxContainingVertices(const VertexRange& range)
+{
+    AxisAlignedBoundingBox box;
+    for (const auto& vertex : range) {
+        box.expandToVertex(vertex);
+    }
+    return box;
+}
 
 }
