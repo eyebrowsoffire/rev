@@ -77,7 +77,7 @@ struct Triangle {
         splitPlane.splitConvexPolygon(inputRange, leftBuilder, rightBuilder);
 
         gsl::span<glm::vec3> leftRange(leftVertices.begin(), leftBuilder.getIterator());
-        gsl::span<glm::vec3> rightRange(rightVertices.begin(), leftBuilder.getIterator());
+        gsl::span<glm::vec3> rightRange(rightVertices.begin(), rightBuilder.getIterator());
         return std::array<AxisAlignedBoundingBox, 2>{
             smallestBoxContainingVertices(leftRange),
             smallestBoxContainingVertices(rightRange),
@@ -341,10 +341,13 @@ private:
     std::set<Event> buildTriangleEvents(
         const AxisAlignedBoundingBox& boundingBox, Triangle<SurfaceData>* triangle)
     {
+        AxisAlignedBoundingBox actualBox = triangle->getBoundingBox();
         std::set<Event> events;
         for (uint8_t k = 0; k < 3; k++) {
             float minimum = boundingBox.minimum[k];
             float maximum = boundingBox.maximum[k];
+            Expects(!(minimum < actualBox.minimum[k]));
+            Expects(!(maximum > actualBox.maximum[k]));
             if (minimum < maximum) {
                 events.insert(
                     Event{ triangle, AxisAlignedPlane{ k, maximum }, Event::Type::Ending });
@@ -418,7 +421,8 @@ private:
         float rightArea = rightBox.getSurfaceArea() / boxSurfaceArea;
         bool removesVolume = (leftBox.getVolume() > 0.0f) && (rightBox.getVolume() > 0.0f);
 
-        auto cost = [leftArea, rightArea, removesVolume](size_t leftTriangleCount, size_t rightTriangleCount) {
+        auto cost = [leftArea, rightArea, removesVolume](
+                        size_t leftTriangleCount, size_t rightTriangleCount) {
             float cost = static_cast<float>(leftTriangleCount) * leftArea
                 + static_cast<float>(rightTriangleCount) * rightArea;
             if (removesVolume && (!leftTriangleCount || !rightTriangleCount)) {
