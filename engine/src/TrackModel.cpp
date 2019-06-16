@@ -9,13 +9,9 @@
 namespace rev {
 
 namespace {
-    constexpr MaterialProperties kMaterialProperties{
-        glm::vec3(0.763975, 0.763975, 0.763975),
-        glm::vec3(0.000000, 0.000000, 0.000000),
-        glm::vec3(0.114541, 0.101377, 0.288820),
-        glm::vec3(0.6, 0.6, 0.6),
-        445.098039
-    };
+    constexpr MaterialProperties kMaterialProperties{ glm::vec3(0.763975, 0.763975, 0.763975),
+        glm::vec3(0.000000, 0.000000, 0.000000), glm::vec3(0.114541, 0.101377, 0.288820),
+        glm::vec3(0.6, 0.6, 0.6), 445.098039 };
 
     struct TrackVertexData {
         TrackVertexData(const glm::vec3& positionArg, const glm::vec3& normalArg)
@@ -29,12 +25,17 @@ namespace {
 
         static void setupAttributes(VertexArrayContext& context)
         {
-            context.setupVertexAttribute<decltype(position)>(0, offsetof(TrackVertexData, position), sizeof(TrackVertexData));
-            context.setupVertexAttribute<decltype(normal)>(1, offsetof(TrackVertexData, normal), sizeof(TrackVertexData));
+            context.setupVertexAttribute<decltype(position)>(
+                0, offsetof(TrackVertexData, position), sizeof(TrackVertexData));
+            context.setupVertexAttribute<decltype(normal)>(
+                1, offsetof(TrackVertexData, normal), sizeof(TrackVertexData));
         }
     };
+}
 
-    Mesh buildTrackMesh(const NurbsCurve<glm::vec3>& curve, float width, size_t segments)
+class TrackBuilder {
+public:
+    TrackBuilder(const NurbsCurve<glm::vec3>& curve, float width, size_t segments)
     {
         Expects(segments > 0);
 
@@ -48,10 +49,11 @@ namespace {
             guidePoints.push_back(curve[current]);
         }
 
-        MeshBuilder<TrackVertexData> builder;
         auto firstGuidePoint = guidePoints.begin();
         auto secondGuidePoint = firstGuidePoint + 1;
         auto guidePointsEnd = guidePoints.end();
+        glm::vec3 previousLeftPosition;
+        glm::vec3 previousRightPosition;
         size_t previousLeftIndex;
         size_t previousRightIndex;
 
@@ -64,33 +66,56 @@ namespace {
             glm::vec3 midPoint = (*firstGuidePoint + *secondGuidePoint) / 2.0f;
             glm::vec3 normal = glm::normalize(glm::cross(guideDirection, left));
 
-            size_t leftIndex = builder.pushVertex(midPoint + left, normal);
-            size_t rightIndex = builder.pushVertex(midPoint - left, normal);
+            glm::vec3 leftPosition = midPoint + left;
+            glm::vec3 rightPosition = midPoint - left;
+            size_t leftIndex = _meshBuilder.pushVertex(leftPosition, normal);
+            size_t rightIndex = _meshBuilder.pushVertex(rightPosition, normal);
             if (!first) {
-                builder.emitTriangle(previousLeftIndex, rightIndex, leftIndex);
-                builder.emitTriangle(previousLeftIndex, previousRightIndex, rightIndex);
+                _meshBuilder.emitTriangle(previousLeftIndex, rightIndex, leftIndex);
+                _meshBuilder.emitTriangle(previousLeftIndex, previousRightIndex, rightIndex);
+
+                _mapBuilder.addTriangle({ previousLeftPosition, rightPosition, leftPosition }, {});
+                _mapBuilder.addTriangle(
+                    { previousLeftPosition, previousRightPosition, rightPosition }, {});
             }
 
             previousLeftIndex = leftIndex;
             previousRightIndex = rightIndex;
+            previousLeftPosition = leftPosition;
+            previousRightPosition = rightPosition;
             firstGuidePoint = secondGuidePoint;
             secondGuidePoint++;
 
             first = false;
         }
-        return builder.createMesh();
     }
+
+    Mesh buildMesh() { return _meshBuilder.createMesh(); }
+
+    KDTree<TrackModel::SurfaceData> buildMap() { return _mapBuilder.build(); }
+
+private:
+    MeshBuilder<TrackVertexData> _meshBuilder;
+    KDTreeBuilder<TrackModel::SurfaceData> _mapBuilder;
+};
+
+TrackModel::TrackModel(
+    ProgramFactory& factory, const NurbsCurve<glm::vec3>& curve, float width, size_t segments)
+    : TrackModel(factory, TrackBuilder(curve, width, segments))
+{
 }
 
-TrackModel::TrackModel(ProgramFactory& factory, const NurbsCurve<glm::vec3>& curve, float width, size_t segments)
+TrackModel::TrackModel(ProgramFactory& factory, TrackBuilder&& builder)
     : _program(factory.getProgram<DrawMaterialsProgram>())
-    , _trackMesh(buildTrackMesh(curve, width, segments))
+    , _trackMesh(builder.buildMesh())
+    , _surfaceMap(builder.buildMap())
 {
+    _surfaceMap.dump();
 }
 
 void TrackModel::render(Camera& camera, gsl::span<std::shared_ptr<TrackObject>>)
 {
-    auto context = _program->prepareContext();    
+    auto context = _program->prepareContext();
     _program->applyMaterialProperties(kMaterialProperties);
     _program->model.set(glm::mat4(1.0));
     _program->view.set(camera.getViewMatrix());

@@ -5,6 +5,7 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <gsl/gsl_assert>
+#include <iostream>
 #include <limits>
 #include <set>
 #include <unordered_set>
@@ -114,7 +115,80 @@ public:
     {
     }
 
+    void dump() const
+    {
+        std::cout << "[KDTree]{" << std::endl;
+        printBoundingBox(_boundingBox, 2);
+        std::visit([this](const auto& root) { printNode(_boundingBox, root, 2); }, *_root);
+        std::cout << "}" << std::endl;
+    }
+
 private:
+    void printIndent(size_t indent = 0) const
+    {
+        for (size_t i = 0; i < indent; i++) {
+            std::cout << " ";
+        }
+    }
+
+    void printVertex(const glm::vec3& vertex) const
+    {
+        std::cout << "(" << vertex.x << ", " << vertex.y << ", " << vertex.z << ")";
+    }
+
+    void printBoundingBox(const AxisAlignedBoundingBox& box, size_t indent = 0) const
+    {
+        printIndent(indent);
+        std::cout << "[Box]{ Min: ";
+        printVertex(box.minimum);
+        std::cout << " Max: ";
+        printVertex(box.maximum);
+        std::cout << " }" << std::endl;
+    }
+
+    void printTriangle(const Triangle<SurfaceData>& triangle, size_t indent = 0) const
+    {
+        printIndent(indent);
+        std::cout << "[Triangle]{" << std::endl;
+        for (const auto& vertex : triangle.vertices) {
+            printIndent(indent + 2);
+            printVertex(vertex);
+            std::cout << std::endl;
+        }
+        printIndent(indent);
+        std::cout << "}" << std::endl;
+    }
+
+    void printNode(const AxisAlignedBoundingBox& box, const LeafNode<SurfaceData>& node,
+        size_t indent = 0) const
+    {
+        printIndent(indent);
+        std::cout << "[Leaf]{" << std::endl;
+        printBoundingBox(box, indent + 2);
+        for (const auto& triangle : node.triangles) {
+            printTriangle(*triangle, indent + 2);
+        }
+        printIndent(indent);
+        std::cout << "}" << std::endl;
+    }
+
+    void printNode(const AxisAlignedBoundingBox& box, const BranchNode<SurfaceData>& node,
+        size_t indent = 0) const
+    {
+        printIndent(indent);
+        std::cout << "[Branch]{" << std::endl;
+        printBoundingBox(box, indent + 2);
+        auto [leftBox, rightBox] = box.split(node.split);
+        std::visit([this, indent, leftBox = leftBox](
+                       const auto& childNode) { printNode(leftBox, childNode, indent + 2); },
+            *node.left);
+        std::visit([this, indent, rightBox = rightBox](
+                       const auto& childNode) { printNode(rightBox, childNode, indent + 2); },
+            *node.right);
+        printIndent(indent);
+        std::cout << "}" << std::endl;
+    }
+
     std::vector<std::unique_ptr<Triangle<SurfaceData>>> _triangles;
     std::unique_ptr<MapNode<SurfaceData>> _root;
     AxisAlignedBoundingBox _boundingBox;
@@ -125,11 +199,14 @@ class KDTreeBuilder {
 public:
     void addTriangle(std::array<glm::vec3, 3> vertices, SurfaceData data)
     {
-        auto triangle = std::make_unique<Triangle>({ vertices, data });
+        auto triangle
+            = std::make_unique<Triangle<SurfaceData>>(Triangle<SurfaceData>{ vertices, data });
         auto boundingBox = smallestBoxContainingVertices(vertices);
         _boundingBox.expandToBox(boundingBox);
 
-        _events.merge(buildTriangleEvents(boundingBox, triangle));
+        for (const auto& event : buildTriangleEvents(boundingBox, triangle.get())) {
+            _events.insert(event);
+        }
         _triangles.push_back(std::move(triangle));
     }
 
@@ -269,10 +346,13 @@ private:
             float minimum = boundingBox.minimum[k];
             float maximum = boundingBox.maximum[k];
             if (minimum < maximum) {
-                events.insert(Event{ triangle, AxisAlignedPlane{ k, maximum }, Event::Type::Ending });
-                events.insert(Event{ triangle, AxisAlignedPlane{ k, minimum }, Event::Type::Starting });
+                events.insert(
+                    Event{ triangle, AxisAlignedPlane{ k, maximum }, Event::Type::Ending });
+                events.insert(
+                    Event{ triangle, AxisAlignedPlane{ k, minimum }, Event::Type::Starting });
             } else {
-                events.insert(Event{ triangle, AxisAlignedPlane{ k, minimum }, Event::Type::Planar });
+                events.insert(
+                    Event{ triangle, AxisAlignedPlane{ k, minimum }, Event::Type::Planar });
             }
         }
         return events;
@@ -336,11 +416,12 @@ private:
 
         float leftArea = leftBox.getSurfaceArea() / boxSurfaceArea;
         float rightArea = rightBox.getSurfaceArea() / boxSurfaceArea;
+        bool removesVolume = (leftBox.getVolume() > 0.0f) && (rightBox.getVolume() > 0.0f);
 
-        auto cost = [leftArea, rightArea](size_t leftTriangleCount, size_t rightTriangleCount) {
+        auto cost = [leftArea, rightArea, removesVolume](size_t leftTriangleCount, size_t rightTriangleCount) {
             float cost = static_cast<float>(leftTriangleCount) * leftArea
                 + static_cast<float>(rightTriangleCount) * rightArea;
-            if (!leftTriangleCount || !rightTriangleCount) {
+            if (removesVolume && (!leftTriangleCount || !rightTriangleCount)) {
                 // We slightly prefer splits that remove empty space.
                 cost *= kEmptySplitDiscount;
             }

@@ -145,6 +145,11 @@ struct AxisAlignedBoundingBox {
         return 2.0f * surfaceArea;
     }
 
+    float getVolume() const {
+        glm::vec3 diagonal = maximum - minimum;
+        return diagonal.x * diagonal.y * diagonal.z;
+    }
+
     std::array<AxisAlignedBoundingBox, 2> split(const AxisAlignedPlane& plane) const
     {
         Expects(!(plane.boundary < minimum[plane.dimensionIndex]));

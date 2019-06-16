@@ -10,8 +10,54 @@ struct TestSurfaceData {
 };
 }
 
-TEST(KDTreeTests, BuildEmptyTree)
+TEST(KDTreeTests, BuildTreeWithSomeTriangles)
 {
     KDTreeBuilder<TestSurfaceData> builder;
+    builder.addTriangle(
+        {
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 4.0f),
+            glm::vec3(0.0f, 3.0f, 0.0f),
+        },
+        { 0 });
+    builder.addTriangle(
+        {
+            glm::vec3(0.0f, 3.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 4.0f),
+            glm::vec3(0.0f, 3.0f, 4.0f),
+        },
+        { 1 });
+
+    builder.addTriangle(
+        {
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 4.0f),
+            glm::vec3(0.0f, -3.0f, 0.0f),
+        },
+        { 2 });
+    builder.addTriangle(
+        {
+            glm::vec3(0.0f, -3.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 4.0f),
+            glm::vec3(0.0f, -3.0f, 4.0f),
+        },
+        { 3 });
+
+    builder.addTriangle(
+        {
+            glm::vec3(1.0f, 0.0f, 0.0f),
+            glm::vec3(2.0f, 0.0f, 4.0f),
+            glm::vec3(2.0f, -3.0f, 0.0f),
+        },
+        { 2 });
+    builder.addTriangle(
+        {
+            glm::vec3(2.0f, -3.0f, 0.0f),
+            glm::vec3(1.0f, 0.0f, 4.0f),
+            glm::vec3(1.0f, -3.0f, 4.0f),
+        },
+        { 3 });
+
     auto tree = builder.build();
+    tree.dump();
 }
