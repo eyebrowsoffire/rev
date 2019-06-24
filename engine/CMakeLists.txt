@@ -6,6 +6,7 @@ add_library(revEngine STATIC)
 target_sources(revEngine PRIVATE
   include/rev/Camera.h
   include/rev/CompositeModel.h
+  include/rev/DebugOverlay.h
   include/rev/DrawMaterialsProgram.h
   include/rev/Engine.h
   include/rev/Environment.h
@@ -49,6 +50,7 @@ target_sources(revEngine PRIVATE
   include/rev/gl/VertexArray.h
 
   src/Camera.cpp
+  src/DebugOverlay.cpp
   src/Engine.cpp
   src/Environment.cpp
   src/Light.cpp

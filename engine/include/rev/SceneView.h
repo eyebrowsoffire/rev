@@ -2,6 +2,7 @@
 
 #include "rev/Camera.h"
 #include "rev/RenderStage.h"
+#include "rev/SceneObjectGroup.h"
 #include "rev/Types.h"
 #include "rev/gl/Buffer.h"
 #include "rev/gl/FrameBuffer.h"
@@ -23,6 +24,8 @@ public:
     void setOutputSize(const RectSize<GLsizei>& outputSize);
     const RectSize<GLsizei>& getOutputSize() const;
     void render();
+
+    void addDebugOverlayGroup(std::shared_ptr<ISceneObjectGroup> group);
 
     const Texture& getOutputTexture() const;
 
@@ -89,5 +92,7 @@ private:
     Uniform<glm::vec3> _lightPosition;
     Uniform<glm::vec3> _lightBaseColor;
     Uniform<glm::vec3> _camPosition;
+
+    std::vector<std::shared_ptr<ISceneObjectGroup>> _debugGroups;
 };
 } // namespace rev

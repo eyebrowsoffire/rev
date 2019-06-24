@@ -74,19 +74,17 @@ namespace {
         }
     )fragmentShader";
 
-    constexpr glm::vec2 kFullScreenQuadVertices[] = {
-        { -1.0f, -1.0 }, { -1.0f, 1.0f }, { 1.0f, 1.0f },
+    constexpr glm::vec2 kFullScreenQuadVertices[]
+        = { { -1.0f, -1.0 }, { -1.0f, 1.0f }, { 1.0f, 1.0f },
 
-        { -1.0f, -1.0f }, { 1.0f, 1.0f }, { 1.0f, -1.0f }
-    };
+              { -1.0f, -1.0f }, { 1.0f, 1.0f }, { 1.0f, -1.0f } };
 
 } // namespace
 
 SceneView::SceneView()
     : _camera(std::make_shared<Camera>())
 {
-    _lightingProgram.buildWithSource(kDeferredVertexShader,
-        kDeferredFragmentShader);
+    _lightingProgram.buildWithSource(kDeferredVertexShader, kDeferredFragmentShader);
     {
         ProgramContext programContext(_lightingProgram);
         _lightPosition = _lightingProgram.getUniform<glm::vec3>("lightPosition");
@@ -106,17 +104,13 @@ SceneView::SceneView()
     VertexArrayContext vaoContext(_fullScreenVao);
     ArrayBufferContext bufferContext(_fullScreenVertexBuffer);
 
-    bufferContext.bindData(gsl::span<const glm::vec2>(kFullScreenQuadVertices),
-        GL_STATIC_DRAW);
+    bufferContext.bindData(gsl::span<const glm::vec2>(kFullScreenQuadVertices), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
 }
 
-void SceneView::setScene(std::shared_ptr<Scene> scene)
-{
-    _scene = std::move(scene);
-}
+void SceneView::setScene(std::shared_ptr<Scene> scene) { _scene = std::move(scene); }
 
 void SceneView::setOutputSize(const RectSize<GLsizei>& outputSize)
 {
@@ -128,10 +122,7 @@ void SceneView::setOutputSize(const RectSize<GLsizei>& outputSize)
     _lightingStage.setOutputSize(outputSize);
 }
 
-const RectSize<GLsizei>& SceneView::getOutputSize() const
-{
-    return _outputSize;
-}
+const RectSize<GLsizei>& SceneView::getOutputSize() const { return _outputSize; }
 
 const std::shared_ptr<Camera>& SceneView::getCamera() const { return _camera; }
 
@@ -157,52 +148,58 @@ void SceneView::render()
 
     // Lighting pass
     {
-        ProgramContext programContext(_lightingProgram);
         auto fbContext = _lightingStage.getRenderContext();
+        {
+            ProgramContext programContext(_lightingProgram);
 
-        _camPosition.set(_camera->getPosition());
-        glViewport(0, 0, _outputSize.width, _outputSize.height);
+            _camPosition.set(_camera->getPosition());
+            glViewport(0, 0, _outputSize.width, _outputSize.height);
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glDisable(GL_DEPTH_TEST);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(
-            GL_TEXTURE_2D,
-            _geometryStage.getOutputTexture<WorldSpacePositionProperty>().getId());
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(
-            GL_TEXTURE_2D,
-            _geometryStage.getOutputTexture<WorldSpaceNormalProperty>().getId());
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(
-            GL_TEXTURE_2D,
-            _geometryStage.getOutputTexture<AmbientMaterialProperty>().getId());
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(
-            GL_TEXTURE_2D,
-            _geometryStage.getOutputTexture<EmissiveMaterialProperty>().getId());
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(
-            GL_TEXTURE_2D,
-            _geometryStage.getOutputTexture<DiffuseMaterialProperty>().getId());
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(
-            GL_TEXTURE_2D,
-            _geometryStage.getOutputTexture<SpecularMaterialProperty>().getId());
-        glActiveTexture(GL_TEXTURE6);
-        glBindTexture(
-            GL_TEXTURE_2D,
-            _geometryStage.getOutputTexture<SpecularExponentProperty>().getId());
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D,
+                _geometryStage.getOutputTexture<WorldSpacePositionProperty>().getId());
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(
+                GL_TEXTURE_2D, _geometryStage.getOutputTexture<WorldSpaceNormalProperty>().getId());
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(
+                GL_TEXTURE_2D, _geometryStage.getOutputTexture<AmbientMaterialProperty>().getId());
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(
+                GL_TEXTURE_2D, _geometryStage.getOutputTexture<EmissiveMaterialProperty>().getId());
+            glActiveTexture(GL_TEXTURE4);
+            glBindTexture(
+                GL_TEXTURE_2D, _geometryStage.getOutputTexture<DiffuseMaterialProperty>().getId());
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(
+                GL_TEXTURE_2D, _geometryStage.getOutputTexture<SpecularMaterialProperty>().getId());
+            glActiveTexture(GL_TEXTURE6);
+            glBindTexture(
+                GL_TEXTURE_2D, _geometryStage.getOutputTexture<SpecularExponentProperty>().getId());
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ONE, GL_ONE);
 
-        VertexArrayContext vaoContext(_fullScreenVao);
-
-        _scene->renderAllLights(_lightPosition, _lightBaseColor);
+            {
+                VertexArrayContext vaoContext(_fullScreenVao);
+                _scene->renderAllLights(_lightPosition, _lightBaseColor);
+            }
+        }
+        
+        // Render debug overlays
+        for (const auto& group : _debugGroups) {
+            group->render(*_camera);
+        }
     }
+}
+
+void SceneView::addDebugOverlayGroup(std::shared_ptr<ISceneObjectGroup> group)
+{
+    _debugGroups.push_back(group);
 }
 
 const Texture& SceneView::getOutputTexture() const

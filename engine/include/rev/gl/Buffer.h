@@ -17,8 +17,8 @@ public:
     using ResourceContext<
         Buffer, enumTargetBindFunction<glBindBuffer, target>>::ResourceContext;
 
-    template <typename ElementType>
-    void bindData(gsl::span<const ElementType> data, GLenum usage)
+    template <typename ElementType, std::ptrdiff_t extent>
+    void bindData(gsl::span<ElementType, extent> data, GLenum usage)
     {
         glBufferData(target, data.size_bytes(), data.data(), usage);
     }

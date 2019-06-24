@@ -27,13 +27,16 @@ public:
 
     void render(Camera& camera, gsl::span<std::shared_ptr<TrackObject>> objects);
 
-private:
-    friend class TrackBuilder;
-    
-    TrackModel(ProgramFactory& factor, TrackBuilder&& model);
-
     struct SurfaceData {
     };
+
+    const KDTree<SurfaceData>& getSurfaceMap() const { return _surfaceMap; }
+
+private:
+    friend class TrackBuilder;
+
+    TrackModel(ProgramFactory& factor, TrackBuilder&& model);
+
     std::shared_ptr<DrawMaterialsProgram> _program;
     Mesh _trackMesh;
     KDTree<SurfaceData> _surfaceMap;

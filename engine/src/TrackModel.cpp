@@ -121,11 +121,8 @@ void TrackModel::render(Camera& camera, gsl::span<std::shared_ptr<TrackObject>>)
     _program->view.set(camera.getViewMatrix());
     _program->projection.set(camera.getProjectionMatrix());
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
     auto vaoContext = _trackMesh.getContext();
     _trackMesh.drawVertices();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 }

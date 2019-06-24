@@ -83,6 +83,51 @@ struct Triangle {
             smallestBoxContainingVertices(rightRange),
         };
     }
+
+    struct Hit {
+        glm::vec2 uv;
+        float t;
+    };
+
+    std::optional<Hit> castRay(const Ray& ray) const
+    {
+        glm::vec3 edge1 = vertices[1] - vertices[0];
+        glm::vec3 edge2 = vertices[2] - vertices[0];
+
+        glm::vec3 p = glm::cross(ray.direction, edge2);
+        float determinant = glm::dot(edge1, p);
+        if (abs(determinant) < std::numeric_limits<float>::epsilon()) {
+            // The ray is parallel.
+            return std::nullopt;
+        }
+
+        glm::vec3 fromV0 = ray.origin - vertices[0];
+        float u = glm::dot(fromV0, p) / determinant;
+        if (u < 0.0f || u > 1.0f) {
+            return std::nullopt;
+        }
+
+        glm::vec3 q = glm::cross(fromV0, edge1);
+        float v = glm::dot(ray.direction, q) / determinant;
+        if (v < 0.0f || u > 1.0f) {
+            return std::nullopt;
+        }
+
+        float t = glm::dot(edge2, q) / determinant;
+        if (t < 0.0f) {
+            return std::nullopt;
+        }
+
+        return Hit{ { u, v }, t };
+    }
+
+    glm::vec3 baryCentricToCartesian(glm::vec2 uv)
+    {
+        float u = uv[0];
+        float v = uv[1];
+        float w = 1.0f - (u + v);
+        return w * vertices[0] + u * vertices[1] + v * vertices[2];
+    }
 };
 
 template <typename SurfaceData>
@@ -115,6 +160,27 @@ public:
     {
     }
 
+    struct Hit {
+        Triangle<SurfaceData>* triangle;
+        glm::vec2 uv;
+        float t;
+    };
+
+    std::optional<Hit> castRay(
+        const Ray& ray, float maxDistance = std::numeric_limits<float>::infinity()) const
+    {
+        if (_boundingBox.containsPoint(ray.origin)) {
+            AxisAlignedBoundingBox::Hit entryPoint{ ray.origin, 0.0f, 0 };
+            return getHit(*_root, ray, _boundingBox, entryPoint, maxDistance);
+        } else {
+            auto hit = _boundingBox.castExternalRay(ray);
+            if (!hit || (hit->t > maxDistance)) {
+                return std::nullopt;
+            }
+            return getHit(*_root, ray, _boundingBox, *hit, maxDistance);
+        }
+    }
+
     void dump() const
     {
         std::cout << "[KDTree]{" << std::endl;
@@ -124,6 +190,86 @@ public:
     }
 
 private:
+    std::optional<Hit> getHit(const MapNode<SurfaceData>& node, const Ray& ray,
+        const AxisAlignedBoundingBox& box, AxisAlignedBoundingBox::Hit& entryPoint,
+        float maxDistance) const
+    {
+        return std::visit(
+            [this, &ray, &box, &entryPoint, maxDistance](
+                const auto& node) { return getHit(node, ray, box, entryPoint, maxDistance); },
+            node);
+    }
+
+    std::optional<Hit> getHit(const BranchNode<SurfaceData>& node, const Ray& ray,
+        const AxisAlignedBoundingBox& box, AxisAlignedBoundingBox::Hit& entryPoint,
+        float maxDistance) const
+    {
+        auto [leftBox, rightBox] = box.split(node.split);
+        float position = entryPoint.intersectionPoint[node.split.dimensionIndex];
+        bool goLeft;
+        if (position < node.split.boundary) {
+            goLeft = true;
+        } else if (position > node.split.boundary) {
+            goLeft = false;
+        } else if (ray.direction[node.split.dimensionIndex] < 0.0f) {
+            goLeft = true;
+        } else if (ray.direction[node.split.dimensionIndex] > 0.0f) {
+            goLeft = false;
+        } else {
+            return std::nullopt;
+        }
+
+        MapNode<SurfaceData>* childNode = goLeft ? node.left.get() : node.right.get();
+        auto hit = getHit(*childNode, ray, (goLeft ? leftBox : rightBox), entryPoint, maxDistance);
+        if (hit) {
+            return hit;
+        }
+        if (entryPoint.t > maxDistance) {
+            return std::nullopt;
+        }
+        if (entryPoint.planeDimension != node.split.dimensionIndex) {
+            return std::nullopt;
+        }
+
+        bool shouldTryOtherChild;
+        if (goLeft) {
+            shouldTryOtherChild = (ray.direction[node.split.dimensionIndex] > 0.0f);
+        } else {
+            shouldTryOtherChild = (ray.direction[node.split.dimensionIndex] < 0.0f);
+        }
+
+        if (shouldTryOtherChild) {
+            childNode = goLeft ? node.right.get() : node.left.get();
+            return getHit(*childNode, ray, (goLeft ? rightBox : leftBox), entryPoint, maxDistance);
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Hit> getHit(const LeafNode<SurfaceData>& node, const Ray& ray,
+        const AxisAlignedBoundingBox& box, AxisAlignedBoundingBox::Hit& entryPoint,
+        float maxDistance) const
+    {
+        float t = std::numeric_limits<float>::infinity();
+        std::optional<Hit> bestHit;
+        for (const auto& triangle : node.triangles) {
+            auto hit = triangle->castRay(ray);
+            if (hit) {
+                if (!bestHit || (hit->t < bestHit->t)) {
+                    bestHit = Hit{ triangle, hit->uv, hit->t };
+                }
+            }
+        }
+
+        if (bestHit && !(bestHit->t > maxDistance)) {
+            return bestHit;
+        }
+
+        auto boxHit = box.castInternalRay(ray);
+        entryPoint = boxHit;
+
+        return std::nullopt;
+    }
+
     void printIndent(size_t indent = 0) const
     {
         for (size_t i = 0; i < indent; i++) {

@@ -2,12 +2,18 @@
 
 #include <glm/glm.hpp>
 #include <gsl/gsl>
+#include <optional>
 
 namespace rev {
 
 struct Segment {
     glm::vec3 start;
     glm::vec3 end;
+};
+
+struct Ray {
+    glm::vec3 origin;
+    glm::vec3 direction;
 };
 
 template <typename VertexRange, typename SegmentVisitor>
@@ -57,18 +63,27 @@ private:
 };
 
 struct AxisAlignedPlane {
-    glm::vec3 intersect(const Segment& segment) const
-    {
-        glm::vec3 segmentDelta = segment.end - segment.start;
-        float boundaryDelta = boundary - segment.start[dimensionIndex];
-        float lengthRatio = boundaryDelta / segmentDelta[dimensionIndex];
+    struct Hit {
+        glm::vec3 intersectionPoint;
+        float t;
+    };
 
-        glm::vec3 intersectPoint = segment.start;
-        intersectPoint += lengthRatio * segmentDelta;
+    Hit intersect(const Ray& ray) const
+    {
+        float boundaryDelta = boundary - ray.origin[dimensionIndex];
+        float t = boundaryDelta / ray.direction[dimensionIndex];
+
+        glm::vec3 intersectPoint = ray.origin + (t * ray.direction);
 
         // Avoid floating point error along the boundary dimension.
         intersectPoint[dimensionIndex] = boundary;
-        return intersectPoint;
+        return { intersectPoint, t };
+    }
+
+    glm::vec3 intersect(const Segment& segment) const
+    {
+        glm::vec3 direction = segment.end - segment.start;
+        return intersect(Ray{ segment.start, direction }).intersectionPoint;
     }
 
     template <typename InputVertexRange, typename LeftBuilder, typename RightBuilder>
@@ -145,7 +160,8 @@ struct AxisAlignedBoundingBox {
         return 2.0f * surfaceArea;
     }
 
-    float getVolume() const {
+    float getVolume() const
+    {
         glm::vec3 diagonal = maximum - minimum;
         return diagonal.x * diagonal.y * diagonal.z;
     }
@@ -160,6 +176,73 @@ struct AxisAlignedBoundingBox {
         splitBoxes[1].minimum[plane.dimensionIndex] = plane.boundary;
 
         return splitBoxes;
+    }
+
+    struct Hit {
+        glm::vec3 intersectionPoint;
+        float t;
+        uint8_t planeDimension;
+    };
+
+    bool containsPoint(const glm::vec3& point) const
+    {
+        for (int k = 0; k < 3; k++) {
+            if (point[k] < minimum[k]) {
+                return false;
+            }
+            if (point[k] > maximum[k]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    std::optional<Hit> castExternalRay(const Ray& ray) const
+    {
+        for (uint8_t k = 0; k < 3; k++) {
+            float d = ray.direction[k];
+            if (d < 0.0f) {
+                float boundary = maximum[k];
+                if (ray.origin[k] > boundary) {
+                    auto intersection = AxisAlignedPlane{ k, boundary }.intersect(ray);
+                    if (containsPoint(intersection.intersectionPoint)) {
+                        return Hit{ intersection.intersectionPoint, intersection.t, k };
+                    }
+                }
+            } else if (d > 0.0f) {
+                float boundary = minimum[k];
+                if (ray.origin[k] < boundary) {
+                    auto intersection = AxisAlignedPlane{ k, boundary }.intersect(ray);
+                    if (containsPoint(intersection.intersectionPoint)) {
+                        return Hit{ intersection.intersectionPoint, intersection.t, k };
+                    }
+                }
+            }
+        }
+        return std::nullopt;
+    }
+
+    Hit castInternalRay(const Ray& ray) const
+    {
+        for (uint8_t k = 0; k < 3; k++) {
+            float d = ray.direction[k];
+
+            float boundary;
+            if (d < 0.0f) {
+                boundary = minimum[k];
+            } else if (d > 0.0f) {
+                boundary = maximum[k];
+            } else {
+                continue;
+            }
+
+            auto intersection = AxisAlignedPlane{ k, boundary }.intersect(ray);
+            if (containsPoint(intersection.intersectionPoint)) {
+                return Hit{ intersection.intersectionPoint, intersection.t, k };
+            }
+        }
+        throw std::runtime_error("Internal ray intersection not found.");
     }
 
     glm::vec3 minimum{ std::numeric_limits<float>::infinity() };

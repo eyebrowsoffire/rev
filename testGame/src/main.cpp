@@ -1,4 +1,5 @@
 #include <rev/Camera.h>
+#include <rev/DebugOverlay.h>
 #include <rev/Engine.h>
 #include <rev/Environment.h>
 #include <rev/IActor.h>
@@ -28,62 +29,36 @@ using namespace rev;
 namespace {
 constexpr glm::vec3 kCubeVertices[] = {
     // Front face
-    { -1.0, -1.0, 1.0 },
-    { 1.0, 1.0, 1.0 },
-    { -1.0, 1.0, 1.0 },
-    { -1.0, -1.0, 1.0 },
-    { 1.0, -1.0, 1.0 },
-    { 1.0, 1.0, 1.0 },
+    { -1.0, -1.0, 1.0 }, { 1.0, 1.0, 1.0 }, { -1.0, 1.0, 1.0 }, { -1.0, -1.0, 1.0 },
+    { 1.0, -1.0, 1.0 }, { 1.0, 1.0, 1.0 },
 
     // Back face
-    { -1.0, -1.0, -1.0 },
-    { -1.0, 1.0, -1.0 },
-    { 1.0, 1.0, -1.0 },
-    { -1.0, -1.0, -1.0 },
-    { 1.0, 1.0, -1.0 },
-    { 1.0, -1.0, -1.0 },
+    { -1.0, -1.0, -1.0 }, { -1.0, 1.0, -1.0 }, { 1.0, 1.0, -1.0 }, { -1.0, -1.0, -1.0 },
+    { 1.0, 1.0, -1.0 }, { 1.0, -1.0, -1.0 },
 
     // Top face
-    { -1.0, 1.0, 1.0 },
-    { 1.0, 1.0, -1.0 },
-    { -1.0, 1.0, -1.0 },
-    { -1.0, 1.0, 1.0 },
-    { 1.0, 1.0, 1.0 },
-    { 1.0, 1.0, -1.0 },
+    { -1.0, 1.0, 1.0 }, { 1.0, 1.0, -1.0 }, { -1.0, 1.0, -1.0 }, { -1.0, 1.0, 1.0 },
+    { 1.0, 1.0, 1.0 }, { 1.0, 1.0, -1.0 },
 
     // Bottom face
-    { -1.0, -1.0, 1.0 },
-    { -1.0, -1.0, -1.0 },
-    { 1.0, -1.0, -1.0 },
-    { -1.0, -1.0, 1.0 },
-    { 1.0, -1.0, -1.0 },
-    { 1.0, -1.0, 1.0 },
+    { -1.0, -1.0, 1.0 }, { -1.0, -1.0, -1.0 }, { 1.0, -1.0, -1.0 }, { -1.0, -1.0, 1.0 },
+    { 1.0, -1.0, -1.0 }, { 1.0, -1.0, 1.0 },
 
     // Left face
-    { -1.0, -1.0, -1.0 },
-    { -1.0, 1.0, 1.0 },
-    { -1.0, 1.0, -1.0 },
-    { -1.0, -1.0, -1.0 },
-    { -1.0, -1.0, 1.0 },
-    { -1.0, 1.0, 1.0 },
+    { -1.0, -1.0, -1.0 }, { -1.0, 1.0, 1.0 }, { -1.0, 1.0, -1.0 }, { -1.0, -1.0, -1.0 },
+    { -1.0, -1.0, 1.0 }, { -1.0, 1.0, 1.0 },
 
     // Right face
-    { 1.0, -1.0, -1.0 },
-    { 1.0, 1.0, -1.0 },
-    { 1.0, 1.0, 1.0 },
-    { 1.0, -1.0, -1.0 },
-    { 1.0, 1.0, 1.0 },
-    { 1.0, -1.0, 1.0 }
+    { 1.0, -1.0, -1.0 }, { 1.0, 1.0, -1.0 }, { 1.0, 1.0, 1.0 }, { 1.0, -1.0, -1.0 },
+    { 1.0, 1.0, 1.0 }, { 1.0, -1.0, 1.0 }
 };
 
-std::vector<glm::vec3>
-buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
+std::vector<glm::vec3> buildFlatNormalsForVertices(gsl::span<const glm::vec3> vertices)
 {
     Expects(vertices.size() % 3 == 0);
     size_t primitiveCount = vertices.size() / 3;
     std::vector<glm::vec3> normals;
-    for (size_t primitiveIndex = 0; primitiveIndex < primitiveCount;
-         primitiveIndex++) {
+    for (size_t primitiveIndex = 0; primitiveIndex < primitiveCount; primitiveIndex++) {
         size_t vertexIndex = primitiveIndex * 3;
         glm::vec3 edge1 = vertices[vertexIndex] - vertices[vertexIndex + 1];
         glm::vec3 edge2 = vertices[vertexIndex + 2] - vertices[vertexIndex + 1];
@@ -128,8 +103,8 @@ class UserCameraController : public rev::IMouseListener,
                              public rev::IKeyboardListener,
                              public rev::IActor {
 public:
-    UserCameraController(std::shared_ptr<rev::Camera> camera,
-        const rev::Point<double>& initialPosition)
+    UserCameraController(
+        std::shared_ptr<rev::Camera> camera, const rev::Point<double>& initialPosition)
         : _camera(std::move(camera))
         , _lastPosition(initialPosition)
         , _zSpeed(0.0f)
@@ -158,7 +133,8 @@ public:
         glm::vec4 newCameraVector = transform * glm::vec4(cameraVector, 1.0f);
         newCameraVector /= newCameraVector.w;
 
-        glm::vec3 newTarget = currentPosition + glm::vec3(newCameraVector.x, newCameraVector.y, newCameraVector.z);
+        glm::vec3 newTarget
+            = currentPosition + glm::vec3(newCameraVector.x, newCameraVector.y, newCameraVector.z);
 
         _camera->setTarget(newTarget);
 
@@ -219,8 +195,7 @@ public:
 
         movementDirection = glm::inverse(_camera->getViewMatrix()) * movementDirection;
 
-        glm::vec3 movementVector(movementDirection.x, movementDirection.y,
-            movementDirection.z);
+        glm::vec3 movementVector(movementDirection.x, movementDirection.y, movementDirection.z);
         movementVector = glm::normalize(movementVector);
 
         constexpr float speedFactor = 9.0f;
@@ -297,6 +272,43 @@ private:
     bool _thrustersOn = false;
 };
 
+class CameraRayCaster : public rev::IActor {
+public:
+    CameraRayCaster(std::shared_ptr<Camera> camera, std::shared_ptr<DebugOverlay> overlay,
+        TrackModel& trackModel)
+        : _camera(std::move(camera))
+        , _overlay(std::move(overlay))
+        , _trackModel(trackModel)
+    {
+    }
+
+    void tick(rev::Environment&, rev::Duration) override
+    {
+        glm::vec3 origin = _camera->getPosition();
+        glm::vec3 target = _camera->getTarget();
+        glm::vec3 direction = glm::normalize(target - origin);
+        Ray cameraRay{ origin, direction };
+        auto hit = _trackModel.getSurfaceMap().castRay(cameraRay);
+        Triangle<TrackModel::SurfaceData>* newTarget = hit ? hit->triangle : nullptr;
+        if (_target != newTarget) {
+            _target = newTarget;
+            if (_target) {
+                _overlay->setTriangle(_target->vertices);
+            } else {
+                _overlay->clearTriangle();
+            }
+        }
+    }
+
+    void kill(rev::Environment&) override {}
+
+private:
+    std::shared_ptr<Camera> _camera;
+    std::shared_ptr<DebugOverlay> _overlay;
+    TrackModel& _trackModel;
+    Triangle<TrackModel::SurfaceData>* _target = nullptr;
+};
+
 } // namespace
 
 int main(void)
@@ -319,8 +331,7 @@ int main(void)
     rev::ObjFile meshFile("assets/hoverbike.obj");
     rev::MtlFile materialsFile("assets/hoverbike.mtl");
     rev::ProgramFactory factory;
-    auto objectGroup = rev::createObjectGroupFromWavefrontFiles(factory, meshFile,
-        materialsFile);
+    auto objectGroup = rev::createObjectGroupFromWavefrontFiles(factory, meshFile, materialsFile);
     auto object = objectGroup->addObject();
     scene->addObjectGroup(objectGroup);
 
@@ -370,7 +381,8 @@ int main(void)
 
     NurbsCurve<glm::vec3> curve(3, knots, controlPoints);
 
-    auto trackGroup = std::make_shared<rev::SceneObjectGroup<rev::TrackModel>>(factory, curve, width, segmentCount);
+    auto trackGroup = std::make_shared<rev::SceneObjectGroup<rev::TrackModel>>(
+        factory, curve, width, segmentCount);
     scene->addObjectGroup(trackGroup);
 
     auto physicsSystem = std::make_shared<rev::physics::System>();
@@ -400,16 +412,25 @@ int main(void)
     camera->setPosition({ 4.0f, 4.0f, 4.0f });
     camera->setAspectRatio(1280.0f / 720.0f);
 
-    auto cameraController = std::make_shared<UserCameraController>(
-        std::move(camera), window->getMousePosition());
+    auto cameraController
+        = std::make_shared<UserCameraController>(camera, window->getMousePosition());
     window->addMouseListener(cameraController);
     window->addKeyboardListener(cameraController);
     window->addKeyboardListener(bikeController);
+
+    auto debugOverlayGroup
+        = std::make_shared<rev::SceneObjectGroup<rev::DebugOverlayModel>>(factory);
+    auto debugOverlay = debugOverlayGroup->addObject();
+    sceneView->addDebugOverlayGroup(debugOverlayGroup);
+
+    auto cameraRayCaster
+        = std::make_shared<CameraRayCaster>(camera, debugOverlay, trackGroup->getModel());
 
     auto environment = engine.createEnvironment();
     environment->addActor(cameraController);
     environment->addActor(physicsSystem);
     environment->addActor(bikeController);
+    environment->addActor(cameraRayCaster);
 
     environment->play();
 

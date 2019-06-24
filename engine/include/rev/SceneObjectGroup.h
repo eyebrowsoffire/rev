@@ -40,6 +40,11 @@ public:
     {
     }
 
+    ModelType &getModel()
+    {
+        return _model;
+    }
+
     // Renders all the objects in the group. Used by the rendering engine.
     void render(Camera& camera) override { _model.render(camera, _objects); }
 
