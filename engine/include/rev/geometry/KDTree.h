@@ -109,7 +109,7 @@ struct Triangle {
 
         glm::vec3 q = glm::cross(fromV0, edge1);
         float v = glm::dot(ray.direction, q) / determinant;
-        if (v < 0.0f || u > 1.0f) {
+        if (v < 0.0f || v > 1.0f) {
             return std::nullopt;
         }
 
