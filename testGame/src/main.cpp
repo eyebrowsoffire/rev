@@ -319,7 +319,7 @@ int main(void)
 
     auto sceneView = engine.createSceneView();
     sceneView->setOutputSize({ 320, 180 });
-    // sceneView->setOutputSize({1280, 720});
+    //sceneView->setOutputSize({1280, 720});
 
     auto scene = engine.createScene();
     sceneView->setScene(scene);

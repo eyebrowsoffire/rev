@@ -47,7 +47,7 @@ out vec4 fragColor;
 
 void main() 
 {
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    fragColor = vec4(1.0, 0.0, 0.0, 0.1);
 }
 )fragmentShader";
         }
@@ -60,16 +60,18 @@ private:
 DebugOverlay::DebugOverlay()
 {
     VertexArrayContext vertexContext(_vao);
+    ArrayBufferContext context{_buffer};
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 }
 
-void DebugOverlay::setTriangle(gsl::span<glm::vec3, 3> vertices)
+void DebugOverlay::setTriangle(gsl::span<const glm::vec3, 3> vertices)
 {
     VertexArrayContext vaoContext{ _vao };
     ArrayBufferContext context{ _buffer };
-    context.bindData(vertices, GL_STATIC_DRAW);
+    context.bindData(vertices, GL_DYNAMIC_DRAW);
+
     _shouldRender = true;
 }
 
@@ -94,7 +96,7 @@ void DebugOverlayModel::render(Camera& camera, gsl::span<std::shared_ptr<DebugOv
     auto programContext = _program->prepareContext();
     _program->view.set(camera.getViewMatrix());
     _program->projection.set(camera.getProjectionMatrix());
-    glDisable(GL_BLEND);
+    glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     for (const auto& object : objects) {
         object->render();

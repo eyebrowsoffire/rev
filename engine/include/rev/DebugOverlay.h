@@ -10,7 +10,7 @@ class DebugOverlay {
 public:
     DebugOverlay();
     
-    void setTriangle(const gsl::span<glm::vec3, 3> vertices);
+    void setTriangle(const gsl::span<const glm::vec3, 3> vertices);
     void clearTriangle();
 
     void render();
