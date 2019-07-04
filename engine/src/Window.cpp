@@ -93,6 +93,7 @@ Window::Window(const std::string& title, const RectSize<int> size)
     glfwSetWindowUserPointer(window, this);
 
     glfwMakeContextCurrent(window);
+    gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress));
 
     _data = std::make_unique<WindowData>();
     _data->window = window;

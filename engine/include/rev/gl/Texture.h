@@ -5,15 +5,15 @@
 
 namespace rev {
 
-using Texture = Resource<singleCreate<glGenTextures>, singleDestroy<glDeleteTextures>>;
+using Texture = Resource<singleCreate<gl::genTextures>, singleDestroy<gl::deleteTextures>>;
 
 template <GLenum target>
 class TextureContext
     : public ResourceContext<Texture,
-          enumTargetBindFunction<glBindTexture, target>> {
+          enumTargetBindFunction<gl::bindTexture, target>> {
 public:
     using ResourceContext<
-        Texture, enumTargetBindFunction<glBindTexture, target>>::ResourceContext;
+        Texture, enumTargetBindFunction<gl::bindTexture, target>>::ResourceContext;
 
     void setParameter(GLenum name, GLint value)
     {

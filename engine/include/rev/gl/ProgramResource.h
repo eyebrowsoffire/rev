@@ -36,7 +36,7 @@ namespace detail {
 } // namespace detail
 
 template <GLenum shaderType>
-class Shader : public Resource<createShader<shaderType>, glDeleteShader> {
+class Shader : public Resource<createShader<shaderType>, gl::deleteShader> {
 public:
     void setSource(std::string_view source)
     {
@@ -59,14 +59,14 @@ public:
 
     std::string getCompileLog()
     {
-        return detail::extractLog<glGetShaderiv, glGetShaderInfoLog>(this->getId());
+        return detail::extractLog<gl::getShaderiv, gl::getShaderInfoLog>(this->getId());
     }
 };
 
 using VertexShader = Shader<GL_VERTEX_SHADER>;
 using FragmentShader = Shader<GL_FRAGMENT_SHADER>;
 
-class ProgramResource : public Resource<glCreateProgram, glDeleteProgram> {
+class ProgramResource : public Resource<gl::createProgram, gl::deleteProgram> {
 public:
     template <GLenum shaderType>
     void attachShader(const Shader<shaderType>& shader)
@@ -85,7 +85,7 @@ public:
 
     std::string getLinkLog()
     {
-        return detail::extractLog<glGetProgramiv, glGetProgramInfoLog>(getId());
+        return detail::extractLog<gl::getProgramiv, gl::getProgramInfoLog>(getId());
     }
 
     void buildWithSource(std::string_view vertexSource,
@@ -122,6 +122,6 @@ public:
     }
 };
 
-using ProgramContext = ResourceContext<ProgramResource, glUseProgram>;
+using ProgramContext = ResourceContext<ProgramResource, gl::useProgram>;
 
 } // namespace rev

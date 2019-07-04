@@ -8,17 +8,17 @@
 
 namespace rev {
 
-using FrameBuffer = Resource<singleCreate<glGenFramebuffers>,
-    singleDestroy<glDeleteFramebuffers>>;
+using FrameBuffer = Resource<singleCreate<gl::genFramebuffers>,
+    singleDestroy<gl::deleteFramebuffers>>;
 
 template <GLenum Target>
 class FrameBufferContext
     : public ResourceContext<
-          FrameBuffer, enumTargetBindFunction<glBindFramebuffer, Target>> {
+          FrameBuffer, enumTargetBindFunction<gl::bindFramebuffer, Target>> {
 public:
     using ResourceContext<
         FrameBuffer,
-        enumTargetBindFunction<glBindFramebuffer, Target>>::ResourceContext;
+        enumTargetBindFunction<gl::bindFramebuffer, Target>>::ResourceContext;
 
     void setTextureAttachment(GLenum attachment, const Texture& texture)
     {

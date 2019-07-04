@@ -70,6 +70,7 @@ target_include_directories(revEngine PUBLIC include)
 target_compile_features(revEngine PRIVATE cxx_std_17)
 
 target_link_libraries(revEngine PRIVATE
+  CONAN_PKG::glad
   CONAN_PKG::glfw
   CONAN_PKG::glm
   CONAN_PKG::gsl_microsoft

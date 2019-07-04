@@ -7,15 +7,15 @@
 
 namespace rev {
 
-using Buffer = Resource<singleCreate<glGenBuffers>, singleDestroy<glDeleteBuffers>>;
+using Buffer = Resource<singleCreate<gl::genBuffers>, singleDestroy<gl::deleteBuffers>>;
 
 template <GLenum target>
 class BindBufferContext
     : public ResourceContext<Buffer,
-          enumTargetBindFunction<glBindBuffer, target>> {
+          enumTargetBindFunction<gl::bindBuffer, target>> {
 public:
     using ResourceContext<
-        Buffer, enumTargetBindFunction<glBindBuffer, target>>::ResourceContext;
+        Buffer, enumTargetBindFunction<gl::bindBuffer, target>>::ResourceContext;
 
     template <typename ElementType, std::ptrdiff_t extent>
     void bindData(gsl::span<const ElementType, extent> data, GLenum usage)

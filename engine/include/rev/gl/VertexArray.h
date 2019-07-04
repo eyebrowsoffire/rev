@@ -40,9 +40,9 @@ static constexpr GLsizei AttributeSize = VertexAttributeInfo<FieldType>::kSize;
 template <typename FieldType>
 static constexpr GLenum AttributeType = VertexAttributeInfo<FieldType>::kType;
 
-using VertexArray = Resource<singleCreate<glGenVertexArrays>,
-    singleDestroy<glDeleteVertexArrays>>;
-class VertexArrayContext : public ResourceContext<VertexArray, glBindVertexArray> {
+using VertexArray = Resource<singleCreate<gl::genVertexArrays>,
+    singleDestroy<gl::deleteVertexArrays>>;
+class VertexArrayContext : public ResourceContext<VertexArray, gl::bindVertexArray> {
 public:
     using ResourceContext::ResourceContext;
     
