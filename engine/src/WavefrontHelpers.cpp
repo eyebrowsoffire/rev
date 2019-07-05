@@ -49,7 +49,7 @@ createObjectGroupFromWavefrontFiles(ProgramFactory& factory,
                     data.position = objFile.positionAtIndex(vertex[0]);
                     data.normal = objFile.normalAtIndex(vertex[2]);
 
-                    index = vertexAttributes.size();
+                    index = static_cast<GLuint>(vertexAttributes.size());
                     vertexAttributes.push_back(data);
 
                     vertexMapping[vertex] = index;

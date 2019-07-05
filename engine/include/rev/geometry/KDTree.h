@@ -41,9 +41,9 @@ struct Triangle {
         }
 
         // Clip the triangle by all sides of our bounding box
-        auto inputIter = buf1.begin();
+        auto inputIter = buf1.data();
         auto inputEnd = inputIter + 3;
-        auto outputIter = buf2.begin();
+        auto outputIter = buf2.data();
 
         // First the min planes in each dimension
         for (uint8_t dim = 0; dim < 3; dim++) {
@@ -76,8 +76,8 @@ struct Triangle {
         OutputIteratorPolygonBuilder rightBuilder(rightVertices.begin());
         splitPlane.splitConvexPolygon(inputRange, leftBuilder, rightBuilder);
 
-        gsl::span<glm::vec3> leftRange(leftVertices.begin(), leftBuilder.getIterator());
-        gsl::span<glm::vec3> rightRange(rightVertices.begin(), rightBuilder.getIterator());
+        gsl::span<glm::vec3> leftRange(leftVertices.data(), &(*leftBuilder.getIterator()));
+        gsl::span<glm::vec3> rightRange(rightVertices.data(), &(*rightBuilder.getIterator()));
         return std::array<AxisAlignedBoundingBox, 2>{
             smallestBoxContainingVertices(leftRange),
             smallestBoxContainingVertices(rightRange),
@@ -404,84 +404,85 @@ private:
         std::set<Event> events, std::unordered_set<Triangle<SurfaceData>*> triangles)
     {
         size_t triangleCount = triangles.size();
-        auto [plane, side, cost] = findBestSplit(box, events, triangleCount);
-        float terminateCost = static_cast<float>(triangleCount) * kIntersectionCost;
-        if (terminateCost > cost) {
-            std::unordered_set<Triangle<SurfaceData>*> leftTriangles;
-            std::unordered_set<Triangle<SurfaceData>*> rightTriangles;
+        if (triangleCount > 0) {
+            auto [plane, side, cost] = findBestSplit(box, events, triangleCount);
+            float terminateCost = static_cast<float>(triangleCount) * kIntersectionCost;
+            if (terminateCost > cost) {
+                std::unordered_set<Triangle<SurfaceData>*> leftTriangles;
+                std::unordered_set<Triangle<SurfaceData>*> rightTriangles;
 
-            for (const auto& event : events) {
-                const auto& eventPlane = event.separationPlane;
-                if (eventPlane.dimensionIndex != plane.dimensionIndex) {
-                    continue;
-                }
+                for (const auto& event : events) {
+                    const auto& eventPlane = event.separationPlane;
+                    if (eventPlane.dimensionIndex != plane.dimensionIndex) {
+                        continue;
+                    }
 
-                if (eventPlane.boundary < plane.boundary) {
-                    if (event.type != Event::Type::Starting) {
-                        triangles.erase(event.triangle);
-                        leftTriangles.insert(event.triangle);
-                    }
-                } else if (eventPlane.boundary > plane.boundary) {
-                    if (event.type != Event::Type::Ending) {
-                        triangles.erase(event.triangle);
-                        rightTriangles.insert(event.triangle);
-                    }
-                } else {
-                    // On the boundary
-                    triangles.erase(event.triangle);
-                    switch (event.type) {
-                    case Event::Type::Starting:
-                        rightTriangles.insert(event.triangle);
-                        break;
-                    case Event::Type::Ending:
-                        leftTriangles.insert(event.triangle);
-                        break;
-                    case Event::Type::Planar:
-                        if (side == Side::Left) {
+                    if (eventPlane.boundary < plane.boundary) {
+                        if (event.type != Event::Type::Starting) {
+                            triangles.erase(event.triangle);
                             leftTriangles.insert(event.triangle);
-                        } else {
+                        }
+                    } else if (eventPlane.boundary > plane.boundary) {
+                        if (event.type != Event::Type::Ending) {
+                            triangles.erase(event.triangle);
                             rightTriangles.insert(event.triangle);
                         }
-                        break;
+                    } else {
+                        // On the boundary
+                        triangles.erase(event.triangle);
+                        switch (event.type) {
+                        case Event::Type::Starting:
+                            rightTriangles.insert(event.triangle);
+                            break;
+                        case Event::Type::Ending:
+                            leftTriangles.insert(event.triangle);
+                            break;
+                        case Event::Type::Planar:
+                            if (side == Side::Left) {
+                                leftTriangles.insert(event.triangle);
+                            } else {
+                                rightTriangles.insert(event.triangle);
+                            }
+                            break;
+                        }
                     }
                 }
-            }
 
-            std::set<Event> leftEvents;
-            std::set<Event> rightEvents;
-            for (const auto& event : events) {
-                if (leftTriangles.count(event.triangle)) {
-                    leftEvents.insert(event);
-                } else if (rightTriangles.count(event.triangle)) {
-                    rightEvents.insert(event);
+                std::set<Event> leftEvents;
+                std::set<Event> rightEvents;
+                for (const auto& event : events) {
+                    if (leftTriangles.count(event.triangle)) {
+                        leftEvents.insert(event);
+                    } else if (rightTriangles.count(event.triangle)) {
+                        rightEvents.insert(event);
+                    }
                 }
-            }
-            events.clear();
+                events.clear();
 
-            // Overlapping triangles remain
-            for (const auto& triangle : triangles) {
-                auto [leftBox, rightBox] = triangle->clipAndSplitBoundingBoxes(box, plane);
-                for (const auto& event : buildTriangleEvents(leftBox, triangle)) {
-                    leftEvents.insert(event);
+                // Overlapping triangles remain
+                for (const auto& triangle : triangles) {
+                    auto [leftBox, rightBox] = triangle->clipAndSplitBoundingBoxes(box, plane);
+                    for (const auto& event : buildTriangleEvents(leftBox, triangle)) {
+                        leftEvents.insert(event);
+                    }
+                    for (const auto& event : buildTriangleEvents(rightBox, triangle)) {
+                        rightEvents.insert(event);
+                    }
+                    leftTriangles.insert(triangle);
+                    rightTriangles.insert(triangle);
                 }
-                for (const auto& event : buildTriangleEvents(rightBox, triangle)) {
-                    rightEvents.insert(event);
-                }
-                leftTriangles.insert(triangle);
-                rightTriangles.insert(triangle);
-            }
-            triangles.clear();
+                triangles.clear();
 
-            auto [leftBox, rightBox] = box.split(plane);
-            return std::make_unique<MapNode<SurfaceData>>(BranchNode<SurfaceData>{
-                plane,
-                createNode(leftBox, std::move(leftEvents), std::move(leftTriangles)),
-                createNode(rightBox, std::move(rightEvents), std::move(rightTriangles)),
-            });
-        } else {
-            return std::make_unique<MapNode<SurfaceData>>(
-                LeafNode<SurfaceData>{ std::move(triangles) });
+                auto [leftBox, rightBox] = box.split(plane);
+                return std::make_unique<MapNode<SurfaceData>>(BranchNode<SurfaceData>{
+                    plane,
+                    createNode(leftBox, std::move(leftEvents), std::move(leftTriangles)),
+                    createNode(rightBox, std::move(rightEvents), std::move(rightTriangles)),
+                });
+            }
         }
+        return std::make_unique<MapNode<SurfaceData>>(
+            LeafNode<SurfaceData>{ std::move(triangles) });
     }
 
     std::set<Event> buildTriangleEvents(
@@ -514,8 +515,8 @@ private:
         const AxisAlignedPlane* bestPlane;
         Side bestSide;
 
-        glm::uvec3 leftTriangleCounts{ 0 };
-        glm::uvec3 rightTriangleCounts{ static_cast<unsigned int>(triangleCount) };
+        std::array<size_t, 3> leftTriangleCounts{ 0 };
+        std::array<size_t, 3> rightTriangleCounts{ triangleCount, triangleCount, triangleCount };
         auto iter = events.begin();
         auto eventsEnd = events.end();
         while (iter != eventsEnd) {

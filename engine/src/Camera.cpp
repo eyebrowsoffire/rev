@@ -6,12 +6,12 @@ namespace rev {
 
 Camera::Camera()
     : _position(0.0f)
-    , _target(0.0, 0.0, -1.0)
-    , _upVector(0.0, 1.0, 0.0)
+    , _target(0.0f, 0.0f, -1.0f)
+    , _upVector(0.0f, 1.0f, 0.0f)
     , _nearClip(0.1f)
     , _farClip(100.0f)
     , _fov(glm::half_pi<float>())
-    , _aspect(16.0 / 9.0)
+    , _aspect(16.0f / 9.0f)
     , _viewDirty(true)
     , _projectionDirty(true)
 {

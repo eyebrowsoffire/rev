@@ -107,7 +107,6 @@ public:
         std::shared_ptr<rev::Camera> camera, const rev::Point<double>& initialPosition)
         : _camera(std::move(camera))
         , _lastPosition(initialPosition)
-        , _zSpeed(0.0f)
     {
     }
 
@@ -212,8 +211,8 @@ public:
 private:
     std::shared_ptr<rev::Camera> _camera;
     rev::Point<double> _lastPosition{ 0.0, 0.0 };
-    float _zSpeed;
-    float _xSpeed;
+    float _zSpeed = 0.0f;
+    float _xSpeed = 0.0f;
 };
 
 class BikeController : public rev::IActor, public rev::IKeyboardListener {
@@ -362,21 +361,21 @@ int main(void)
         { { -20.0f, 0.0f, 0.0f }, 1.0f },
     };
     float knots[] = {
-        0.0,
-        0.0,
-        0.0,
-        0.1,
-        0.1,
-        0.1,
-        0.2,
-        0.2,
-        0.3,
-        0.3,
-        0.4,
-        0.5,
-        0.6,
-        0.6,
-        0.6,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.1f,
+        0.1f,
+        0.1f,
+        0.2f,
+        0.2f,
+        0.3f,
+        0.3f,
+        0.4f,
+        0.5f,
+        0.6f,
+        0.6f,
+        0.6f,
     };
 
     NurbsCurve<glm::vec3> curve(3, knots, controlPoints);

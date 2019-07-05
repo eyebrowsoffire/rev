@@ -7,6 +7,7 @@
 #include <gsl/gsl_assert>
 #include <gsl/span>
 #include <limits>
+#include <vector>
 
 namespace rev {
 
@@ -29,7 +30,7 @@ public:
         , _controlPoints(controlPoints.begin(), controlPoints.end())
     {
         Expects(order > 1);
-        Expects(controlPoints.size() >= order);
+        Expects(static_cast<size_t>(controlPoints.size()) >= order);
         Expects(knots.size() == (controlPoints.size() + order));
     }
 

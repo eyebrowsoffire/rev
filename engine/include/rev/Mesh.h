@@ -29,7 +29,7 @@ public:
     void drawVertices()
     {
         ElementBufferContext context(_indexBuffer);
-        glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexCount), GL_UNSIGNED_INT, nullptr);
     }
 
 private:

@@ -31,7 +31,7 @@ public:
     ModelComponent(gsl::span<const GLuint> indexes,
         const MaterialProperties& properties)
         : _properties(properties)
-        , _indexCount(indexes.size())
+        , _indexCount(static_cast<GLsizei>(indexes.size()))
     {
         ElementBufferContext context(_indexes);
         context.bindData(indexes, GL_STATIC_DRAW);

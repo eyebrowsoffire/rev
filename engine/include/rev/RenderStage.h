@@ -36,7 +36,7 @@ public:
                 drawBuffers.push_back(AttachmentType::kAttachmentPoint);
             }
         });
-        glDrawBuffers(drawBuffers.size(), drawBuffers.data());
+        glDrawBuffers(static_cast<GLsizei>(drawBuffers.size()), drawBuffers.data());
         glGetError();
     }
 

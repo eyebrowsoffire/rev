@@ -9,9 +9,9 @@
 namespace rev {
 
 namespace {
-    constexpr MaterialProperties kMaterialProperties{ glm::vec3(0.763975, 0.763975, 0.763975),
-        glm::vec3(0.000000, 0.000000, 0.000000), glm::vec3(0.114541, 0.101377, 0.288820),
-        glm::vec3(0.6, 0.6, 0.6), 445.098039 };
+    constexpr MaterialProperties kMaterialProperties{ glm::vec3(0.763975f, 0.763975f, 0.763975f),
+        glm::vec3(0.000000f, 0.000000f, 0.000000f), glm::vec3(0.114541f, 0.101377f, 0.288820f),
+        glm::vec3(0.6f, 0.6f, 0.6f), 445.098039f };
 
     struct TrackVertexData {
         TrackVertexData(const glm::vec3& positionArg, const glm::vec3& normalArg)
@@ -110,7 +110,6 @@ TrackModel::TrackModel(ProgramFactory& factory, TrackBuilder&& builder)
     , _trackMesh(builder.buildMesh())
     , _surfaceMap(builder.buildMap())
 {
-    _surfaceMap.dump();
 }
 
 void TrackModel::render(Camera& camera, gsl::span<std::shared_ptr<TrackObject>>)
