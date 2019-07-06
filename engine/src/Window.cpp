@@ -12,6 +12,11 @@
 namespace rev {
 
 namespace {
+    constexpr const char* kSwitchMapping
+        = "030000007e0500000920000000020000,Nintendo Switch Pro "
+          "Controller,a:b0,b:b1,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,"
+          "leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,"
+          "rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b2,y:b3,";
 
     void initGLFW()
     {
@@ -58,6 +63,56 @@ namespace {
 
               { -1.0f, -1.0f }, { 1.0f, 1.0f }, { 1.0f, -1.0f } };
 
+    void dumpJoysticks()
+    {
+        glfwUpdateGamepadMappings(kSwitchMapping);
+
+        for (int id = GLFW_JOYSTICK_1; id <= GLFW_JOYSTICK_LAST; id++) {
+            std::cout << "GLFW_JOYSTICK_" << (id + 1) << ": ";
+            if (!glfwJoystickPresent(id)) {
+                std::cout << "GLFW_JOYSTICK_" << (id + 1) << "Unplugged" << std::endl;
+                continue;
+            }
+            std::cout << glfwGetJoystickName(id) << std::endl;
+            bool isGamePad = glfwJoystickIsGamepad(id);
+            std::cout << "  Gamepad: " << (isGamePad ? "yes" : "no") << std::endl;
+            int axisCount;
+            const float* axisValues = glfwGetJoystickAxes(id, &axisCount);
+            if (!axisCount) {
+                std::cout << "  No axes." << std::endl;
+            } else {
+                std::cout << "  Axes: (" << axisCount << ")[" << std::endl;
+                for (int i = 0; i < axisCount; i++) {
+                    std::cout << "    " << axisValues[i] << std::endl;
+                }
+                std::cout << "  ]" << std::endl;
+            }
+
+            int buttonCount;
+            const unsigned char* buttonStates = glfwGetJoystickButtons(id, &buttonCount);
+            if (!buttonCount) {
+                std::cout << "  No buttons." << std::endl;
+            } else {
+                std::cout << "  Buttons: (" << buttonCount << ")[" << std::endl;
+                for (int i = 0; i < buttonCount; i++) {
+                    std::cout << "    " << (buttonStates[i] ? "on" : "off") << std::endl;
+                }
+                std::cout << "  ]" << std::endl;
+            }
+
+            int hatCount;
+            const unsigned char* hatStates = glfwGetJoystickHats(id, &hatCount);
+            if (!hatCount) {
+                std::cout << "  No hats." << std::endl;
+            } else {
+                std::cout << "  Hats: (" << hatCount << ")[" << std::endl;
+                for (int i = 0; i < hatCount; i++) {
+                    std::cout << "    " << (hatStates[i] ? "on" : "off") << std::endl;
+                }
+                std::cout << "  ]" << std::endl;
+            }
+        }
+    }
 } // namespace
 
 struct WindowData {
@@ -194,6 +249,8 @@ Window::Window(const std::string& title, const RectSize<int> size)
         for (const auto& listener : myThis->_data->keyboardListeners) {
         }
     });
+
+    dumpJoysticks();
 
     VertexArrayContext context(_data->vao);
     context.setBuffer<GL_ARRAY_BUFFER>(_data->vertexData);
