@@ -59,8 +59,8 @@ private:
 
 DebugOverlay::DebugOverlay()
 {
-    VertexArrayContext vertexContext(_vao);
-    ArrayBufferContext context{_buffer};
+    VertexArrayContext context(_vao);
+    context.setBuffer<GL_ARRAY_BUFFER>(_buffer);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
@@ -68,9 +68,8 @@ DebugOverlay::DebugOverlay()
 
 void DebugOverlay::setTriangle(gsl::span<const glm::vec3, 3> vertices)
 {
-    VertexArrayContext vaoContext{ _vao };
-    ArrayBufferContext context{ _buffer };
-    context.bindData(vertices, GL_DYNAMIC_DRAW);
+    VertexArrayContext context{ _vao };
+    context.bindBufferData<GL_ARRAY_BUFFER>(vertices, GL_DYNAMIC_DRAW);
 
     _shouldRender = true;
 }

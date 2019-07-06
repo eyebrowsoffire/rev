@@ -101,10 +101,9 @@ SceneView::SceneView()
         _lightingProgram.getUniform<GLint>("specularExponent").set(6);
     }
 
-    VertexArrayContext vaoContext(_fullScreenVao);
-    ArrayBufferContext bufferContext(_fullScreenVertexBuffer);
-
-    bufferContext.bindData(gsl::span<const glm::vec2>(kFullScreenQuadVertices), GL_STATIC_DRAW);
+    VertexArrayContext context(_fullScreenVao);
+    context.setBuffer<GL_ARRAY_BUFFER>(_fullScreenVertexBuffer);
+    context.bindBufferData<GL_ARRAY_BUFFER>(gsl::span(kFullScreenQuadVertices), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);

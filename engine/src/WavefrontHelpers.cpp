@@ -25,18 +25,17 @@ struct hash<glm::uvec3> {
 
 namespace rev {
 
-std::shared_ptr<SceneObjectGroup<CompositeModel>>
-createObjectGroupFromWavefrontFiles(ProgramFactory& factory,
-    const ObjFile& objFile,
-    const MtlFile& mtlFile)
+std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefrontFiles(
+    ProgramFactory& factory, const ObjFile& objFile, const MtlFile& mtlFile)
 {
     std::vector<VertexData> vertexAttributes;
+    std::vector<GLuint> indices;
     std::vector<ModelComponent> components;
     std::unordered_map<glm::uvec3, GLuint> vertexMapping;
 
     size_t vertexOffset = 0;
     for (const auto& waveFrontObject : objFile.getWavefrontObjects()) {
-        std::vector<GLuint> indexes;
+        size_t indexOffset = indices.size();
         for (const auto& triangle : waveFrontObject.triangles) {
             for (const auto& vertex : triangle) {
                 GLuint index;
@@ -54,17 +53,19 @@ createObjectGroupFromWavefrontFiles(ProgramFactory& factory,
 
                     vertexMapping[vertex] = index;
                 }
-                indexes.push_back(index);
+                indices.push_back(index);
             }
         }
 
-        const MaterialProperties* properties = mtlFile.propertiesForMaterial(waveFrontObject.materialName);
+        const MaterialProperties* properties
+            = mtlFile.propertiesForMaterial(waveFrontObject.materialName);
         Expects(properties != nullptr);
 
-        components.emplace_back(indexes, *properties);
+        components.emplace_back(
+            static_cast<GLsizei>(indices.size() - indexOffset), indexOffset, *properties);
     }
 
-    return std::make_shared<SceneObjectGroup<CompositeModel>>(
-        factory, std::move(components), vertexAttributes);
+    return std::make_shared<SceneObjectGroup<CompositeModel>>(factory, std::move(components),
+        gsl::span<const VertexData>(vertexAttributes), gsl::span<const GLuint>(indices));
 }
 } // namespace rev

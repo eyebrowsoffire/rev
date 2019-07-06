@@ -53,11 +53,10 @@ namespace {
         }
     )fragmentShader";
 
-    constexpr glm::vec2 kFullScreenQuadVertices[] = {
-        { -1.0f, -1.0 }, { -1.0f, 1.0f }, { 1.0f, 1.0f },
+    constexpr glm::vec2 kFullScreenQuadVertices[]
+        = { { -1.0f, -1.0 }, { -1.0f, 1.0f }, { 1.0f, 1.0f },
 
-        { -1.0f, -1.0f }, { 1.0f, 1.0f }, { 1.0f, -1.0f }
-    };
+              { -1.0f, -1.0f }, { 1.0f, 1.0f }, { 1.0f, -1.0f } };
 
 } // namespace
 
@@ -196,11 +195,10 @@ Window::Window(const std::string& title, const RectSize<int> size)
         }
     });
 
-    VertexArrayContext vaoContext(_data->vao);
-    ArrayBufferContext bufferContext(_data->vertexData);
+    VertexArrayContext context(_data->vao);
+    context.setBuffer<GL_ARRAY_BUFFER>(_data->vertexData);
 
-    bufferContext.bindData(gsl::span<const glm::vec2>(kFullScreenQuadVertices),
-        GL_STATIC_DRAW);
+    context.bindBufferData<GL_ARRAY_BUFFER>(gsl::span(kFullScreenQuadVertices), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
@@ -264,11 +262,12 @@ void Window::updateAspect()
     }
 
     RectSize<GLsizei> frameBufferSize;
-    glfwGetFramebufferSize(_data->window, &frameBufferSize.width,
-        &frameBufferSize.height);
+    glfwGetFramebufferSize(_data->window, &frameBufferSize.width, &frameBufferSize.height);
 
-    float contentAspect = static_cast<float>(contentSize.width) / static_cast<float>(contentSize.height);
-    float frameBufferAspect = static_cast<float>(frameBufferSize.width) / static_cast<float>(frameBufferSize.height);
+    float contentAspect
+        = static_cast<float>(contentSize.width) / static_cast<float>(contentSize.height);
+    float frameBufferAspect
+        = static_cast<float>(frameBufferSize.width) / static_cast<float>(frameBufferSize.height);
 
     if (frameBufferAspect > contentAspect) {
         _data->aspect = { (contentAspect / frameBufferAspect), 1.0f };

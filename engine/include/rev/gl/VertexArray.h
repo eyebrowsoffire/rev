@@ -40,18 +40,31 @@ static constexpr GLsizei AttributeSize = VertexAttributeInfo<FieldType>::kSize;
 template <typename FieldType>
 static constexpr GLenum AttributeType = VertexAttributeInfo<FieldType>::kType;
 
-using VertexArray = Resource<singleCreate<gl::genVertexArrays>,
-    singleDestroy<gl::deleteVertexArrays>>;
+using VertexArray
+    = Resource<singleCreate<gl::genVertexArrays>, singleDestroy<gl::deleteVertexArrays>>;
 class VertexArrayContext : public ResourceContext<VertexArray, gl::bindVertexArray> {
 public:
     using ResourceContext::ResourceContext;
-    
+
     template <typename FieldType>
-    void setupVertexAttribute(GLuint attributeIndex, ptrdiff_t offset, GLsizei stride, bool normalize = false)
+    void setupVertexAttribute(
+        GLuint attributeIndex, ptrdiff_t offset, GLsizei stride, bool normalize = false)
     {
         glEnableVertexAttribArray(attributeIndex);
-        glVertexAttribPointer(attributeIndex, AttributeSize<FieldType>, AttributeType<FieldType>, (normalize ? GL_TRUE : GL_FALSE), stride,
-            reinterpret_cast<void*>(offset));
+        glVertexAttribPointer(attributeIndex, AttributeSize<FieldType>, AttributeType<FieldType>,
+            (normalize ? GL_TRUE : GL_FALSE), stride, reinterpret_cast<void*>(offset));
+    }
+
+    template <GLenum target>
+    void setBuffer(const Buffer& buffer)
+    {
+        glBindBuffer(target, buffer.getId());
+    }
+
+    template <GLenum target, typename ElementType, std::ptrdiff_t extent>
+    void bindBufferData(gsl::span<const ElementType, extent> data, GLenum usage)
+    {
+        glBufferData(target, data.size_bytes(), data.data(), usage);
     }
 };
 

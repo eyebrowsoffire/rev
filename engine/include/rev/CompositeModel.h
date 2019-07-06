@@ -14,11 +14,7 @@
 namespace rev {
 
 struct CompositeObject {
-    CompositeObject()
-        : transform(1.0f)
-    {
-    }
-    glm::mat4 transform;
+    glm::mat4 transform{ 1.0f };
 };
 
 struct VertexData {
@@ -28,13 +24,11 @@ struct VertexData {
 
 class ModelComponent {
 public:
-    ModelComponent(gsl::span<const GLuint> indexes,
-        const MaterialProperties& properties)
+    ModelComponent(GLsizei indexCount, size_t indexOffset, const MaterialProperties& properties)
         : _properties(properties)
-        , _indexCount(static_cast<GLsizei>(indexes.size()))
+        , _indexCount(indexCount)
+        , _indexOffset(indexOffset)
     {
-        ElementBufferContext context(_indexes);
-        context.bindData(indexes, GL_STATIC_DRAW);
     }
 
     void draw(DrawMaterialsProgram& program)
@@ -45,12 +39,12 @@ public:
         program.specular.set(_properties.specularColor);
         program.specularExponent.set(_properties.specularExponent);
 
-        ElementBufferContext context(_indexes);
-        glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT,
+            reinterpret_cast<void*>(_indexOffset * sizeof(GLuint)));
     }
 
 private:
-    Buffer _indexes;
+    size_t _indexOffset;
     GLsizei _indexCount;
     MaterialProperties _properties;
 };
@@ -59,31 +53,26 @@ class CompositeModel {
 public:
     using SceneObjectType = CompositeObject;
 
-    CompositeModel(ProgramFactory& factory,
-        std::vector<ModelComponent>&& components,
-        gsl::span<const VertexData> vertices)
+    CompositeModel(ProgramFactory& factory, std::vector<ModelComponent>&& components,
+        gsl::span<const VertexData> vertices, gsl::span<const GLuint> indices)
         : _components(std::move(components))
         , _program(factory.getProgram<DrawMaterialsProgram>())
     {
-        VertexArrayContext vertexContext(_vao);
+        VertexArrayContext context(_vao);
 
-        ArrayBufferContext bufferContext(_vertices);
+        context.setBuffer<GL_ARRAY_BUFFER>(_vertices);
+        context.bindBufferData<GL_ARRAY_BUFFER>(vertices, GL_STATIC_DRAW);
 
-        bufferContext.bindData(vertices, GL_STATIC_DRAW);
+        context.setBuffer<GL_ELEMENT_ARRAY_BUFFER>(_indices);
+        context.bindBufferData<GL_ELEMENT_ARRAY_BUFFER>(indices, GL_STATIC_DRAW);
 
-        // Position
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData),
-            nullptr);
-
-        // Normal
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData),
-            reinterpret_cast<void*>(sizeof(glm::vec3)));
+        context.setupVertexAttribute<decltype(VertexData::position)>(
+            0, offsetof(VertexData, position), sizeof(VertexData));
+        context.setupVertexAttribute<decltype(VertexData::normal)>(
+            1, offsetof(VertexData, normal), sizeof(VertexData));
     }
 
-    void render(Camera& camera,
-        gsl::span<std::shared_ptr<CompositeObject>> objects)
+    void render(Camera& camera, gsl::span<std::shared_ptr<CompositeObject>> objects)
     {
         auto programContext = _program->prepareContext();
         VertexArrayContext vertexContext(_vao);
@@ -104,6 +93,7 @@ private:
     std::shared_ptr<DrawMaterialsProgram> _program;
     VertexArray _vao;
     Buffer _vertices;
+    Buffer _indices;
     std::vector<ModelComponent> _components;
 };
 } // namespace rev

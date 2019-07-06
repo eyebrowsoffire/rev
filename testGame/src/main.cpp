@@ -245,7 +245,7 @@ public:
             _particle->setVelocity(newVelocity);
         }
 
-        glm::mat4 identity;
+        glm::mat4 identity{1.0f};
         _sceneObject->transform = glm::translate(identity, _particle->getPosition().getValue());
     }
 

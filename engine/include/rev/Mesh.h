@@ -13,22 +13,18 @@ public:
         : _indexCount(indices.size())
     {
         VertexArrayContext context(_vao);
-        ArrayBufferContext arrayBufferContext(_vertexBuffer);
-        ElementBufferContext indexBufferContext(_indexBuffer);
-        arrayBufferContext.bindData(vertices, GL_STATIC_DRAW);
-        indexBufferContext.bindData(indices, GL_STATIC_DRAW);
+        context.setBuffer<GL_ARRAY_BUFFER>(_vertexBuffer);
+        context.setBuffer<GL_ELEMENT_ARRAY_BUFFER>(_indexBuffer);
+        context.bindBufferData<GL_ARRAY_BUFFER>(vertices, GL_STATIC_DRAW);
+        context.bindBufferData<GL_ELEMENT_ARRAY_BUFFER>(indices, GL_STATIC_DRAW);
 
         VertexData::setupAttributes(context);
     }
 
-    VertexArrayContext getContext()
-    {
-        return _vao;
-    }
+    VertexArrayContext getContext() { return _vao; }
 
     void drawVertices()
     {
-        ElementBufferContext context(_indexBuffer);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexCount), GL_UNSIGNED_INT, nullptr);
     }
 
