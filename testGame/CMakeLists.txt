@@ -10,7 +10,7 @@ target_sources(testGame PRIVATE
 target_compile_features(testGame PRIVATE cxx_std_17)
 
 target_link_libraries(testGame PRIVATE
-  revEngine
+  rev
 )
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})

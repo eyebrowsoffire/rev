@@ -1,9 +1,9 @@
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-add_library(revEngine STATIC)
+add_library(rev STATIC)
 
-target_sources(revEngine PRIVATE
+target_sources(rev PRIVATE
   include/rev/Camera.h
   include/rev/CompositeModel.h
   include/rev/DebugOverlay.h
@@ -66,10 +66,10 @@ target_sources(revEngine PRIVATE
   src/Window.cpp
 )
 
-target_include_directories(revEngine PUBLIC include)
-target_compile_features(revEngine PRIVATE cxx_std_17)
+target_include_directories(rev PUBLIC include)
+target_compile_features(rev PRIVATE cxx_std_17)
 
-target_link_libraries(revEngine PRIVATE
+target_link_libraries(rev PRIVATE
   CONAN_PKG::glad
   CONAN_PKG::glfw
   CONAN_PKG::glm

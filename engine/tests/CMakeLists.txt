@@ -12,5 +12,5 @@ target_sources(revTests PRIVATE
 
 target_link_libraries(revTests PRIVATE
   CONAN_PKG::gtest
-  revEngine
+  rev
 )
