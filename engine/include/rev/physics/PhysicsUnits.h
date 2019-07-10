@@ -17,10 +17,10 @@ using DistanceComposition = PhysicsComponents::MakeComposition<DistanceComponent
 using TimeComposition = PhysicsComponents::MakeComposition<TimeComponent>;
 using MassComposition = PhysicsComponents::MakeComposition<MassComponent>;
 
-using VelocityComposition = MultiplyComposition<DistanceComposition,
-    InvertComposition<TimeComposition>>;
-using AccelerationComposition = MultiplyComposition<VelocityComposition,
-    InvertComposition<TimeComposition>>;
+using VelocityComposition
+    = MultiplyComposition<DistanceComposition, InvertComposition<TimeComposition>>;
+using AccelerationComposition
+    = MultiplyComposition<VelocityComposition, InvertComposition<TimeComposition>>;
 using MomentumComposition = MultiplyComposition<VelocityComposition, MassComposition>;
 using ForceComposition = MultiplyComposition<MassComposition, AccelerationComposition>;
 

@@ -9,9 +9,14 @@ class Particle {
 public:
     void setMass(Mass<float> mass);
     Mass<float> getMass() const;
+
+    void setDamping(float damping);
+    float getDamping() const;
+    
     void addImpulse(const Momentum<glm::vec3>& impulse);
 
     void flushImpulses();
+    void applyDamping(Time<float> elapsedTime);
     void updatePosition(Time<float> elapsedTime);
 
     const Distance<glm::vec3>& getPosition() const;
@@ -25,5 +30,6 @@ private:
     Velocity<glm::vec3> _velocity;
     Distance<glm::vec3> _position;
     Mass<float> _mass;
+    float _damping = 0.0f;
 };
 } // namespace rev::physics

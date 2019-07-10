@@ -14,6 +14,7 @@ void System::tick(Environment& environment, Duration elapsedTime)
 
     for (const auto& particle : _particles) {
         particle->flushImpulses();
+        particle->applyDamping(physicsTime);
         particle->updatePosition(physicsTime);
     }
 }

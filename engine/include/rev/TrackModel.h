@@ -35,7 +35,7 @@ public:
 private:
     friend class TrackBuilder;
 
-    TrackModel(ProgramFactory& factor, TrackBuilder&& model);
+    TrackModel(ProgramFactory& factory, TrackBuilder&& model);
 
     std::shared_ptr<DrawMaterialsProgram> _program;
     Mesh _trackMesh;

@@ -23,8 +23,8 @@ public:
     using ControlPointType = WeightedControlPoint<PointType>;
     using ValueType = typename PointType::value_type;
 
-    NurbsCurve(size_t order, gsl::span<ValueType> knots,
-        gsl::span<ControlPointType> controlPoints)
+    NurbsCurve(size_t order, gsl::span<const ValueType> knots,
+        gsl::span<const ControlPointType> controlPoints)
         : _order(order)
         , _knots(knots.begin(), knots.end())
         , _controlPoints(controlPoints.begin(), controlPoints.end())
@@ -34,15 +34,9 @@ public:
         Expects(knots.size() == (controlPoints.size() + order));
     }
 
-    ValueType getStart() const
-    {
-        return _knots.front();
-    }
+    ValueType getStart() const { return _knots.front(); }
 
-    ValueType getEnd() const
-    {
-        return _knots.back();
-    }
+    ValueType getEnd() const { return _knots.back(); }
 
     PointType operator[](ValueType position) const
     {
@@ -73,7 +67,8 @@ public:
         do {
             controlPointIndex--;
             auto& controlPoint = _controlPoints[controlPointIndex];
-            ValueType weightedBasis = basisValue(position, controlPointIndex, _order) * controlPoint.weight;
+            ValueType weightedBasis
+                = basisValue(position, controlPointIndex, _order) * controlPoint.weight;
             numerator += weightedBasis * _controlPoints[controlPointIndex].point;
             denominator += weightedBasis;
             controlPointsToProcess--;
@@ -82,8 +77,7 @@ public:
     }
 
 private:
-    ValueType basisValue(ValueType position, size_t controlPointIndex,
-        size_t order) const
+    ValueType basisValue(ValueType position, size_t controlPointIndex, size_t order) const
     {
         auto& controlPoint = _controlPoints[controlPointIndex];
         ValueType firstKnot = _knots[controlPointIndex];
@@ -103,11 +97,13 @@ private:
 
             ValueType result{ 0 };
             if (position < secondToLastKnot) {
-                result += rampUp(position, firstKnot, secondToLastKnot) * basisValue(position, controlPointIndex, lowerOrder);
+                result += rampUp(position, firstKnot, secondToLastKnot)
+                    * basisValue(position, controlPointIndex, lowerOrder);
             }
 
             if (position > secondKnot) {
-                result += rampDown(position, secondKnot, lastKnot) * basisValue(position, controlPointIndex + 1, lowerOrder);
+                result += rampDown(position, secondKnot, lastKnot)
+                    * basisValue(position, controlPointIndex + 1, lowerOrder);
             }
 
             return result;

@@ -16,8 +16,8 @@ struct UnitComponentEnumeration {
 
     template <typename Component>
     struct SingleComponentComposition {
-        using Numerator = std::integer_sequence<
-            size_t, (std::is_same_v<Component, Components> ? 1 : 0)...>;
+        using Numerator
+            = std::integer_sequence<size_t, (std::is_same_v<Component, Components> ? 1 : 0)...>;
         using Denominator = std::integer_sequence<size_t, kZero<Components>...>;
 
         using Type = UnitComposition<UnitComponentEnumeration, Numerator, Denominator>;
@@ -39,8 +39,7 @@ struct UnitComposition {
 
 template <typename Composition>
 using InvertComposition = UnitComposition<typename Composition::Enumeration,
-    typename Composition::Denominator,
-    typename Composition::Numerator>;
+    typename Composition::Denominator, typename Composition::Numerator>;
 
 template <typename FirstComposition, typename SecondComposition>
 struct CompositionMultiplier {
@@ -57,8 +56,8 @@ struct CompositionMultiplier {
     using ReducedNumerator = SubtractIntegerSeq<CombinedNumerator, CanceledComponents>;
     using ReducedDenominator = SubtractIntegerSeq<CombinedDenominator, CanceledComponents>;
 
-    using Type = UnitComposition<typename FirstComposition::Enumeration,
-        ReducedNumerator, ReducedDenominator>;
+    using Type = UnitComposition<typename FirstComposition::Enumeration, ReducedNumerator,
+        ReducedDenominator>;
 };
 
 template <typename FirstComposition, typename SecondComposition>
@@ -73,13 +72,22 @@ public:
     {
     }
 
-    template <typename... Args, typename = std::enable_if_t<std::is_constructible_v<ValueType, Args...>>>
+    template <typename... Args,
+        typename = std::enable_if_t<std::is_constructible_v<ValueType, Args...>>>
     Unit(Args&&... args)
         : _value(std::forward<Args>(args)...)
     {
     }
 
     const ValueType& getValue() const { return _value; }
+
+    template <typename OtherValueType>
+    auto operator*(const OtherValueType& other) const
+    {
+        auto newValue = _value * other;
+
+        return Unit<decltype(newValue), Composition>(newValue);
+    }
 
     template <typename OtherValueType, typename OtherComposition>
     auto operator*(const Unit<OtherValueType, OtherComposition>& other) const
@@ -93,21 +101,16 @@ public:
     template <typename OtherValueType, typename OtherComposition>
     auto operator/(const Unit<OtherValueType, OtherComposition>& other) const
     {
-        using NewCompositionType = MultiplyComposition<Composition, InvertComposition<OtherComposition>>;
+        using NewCompositionType
+            = MultiplyComposition<Composition, InvertComposition<OtherComposition>>;
         auto newValue = _value / other.getValue();
 
         return Unit<decltype(newValue), NewCompositionType>(newValue);
     }
 
-    Unit operator+(const Unit& other) const
-    {
-        return Unit(_value + other.getValue());
-    }
+    Unit operator+(const Unit& other) const { return Unit(_value + other.getValue()); }
 
-    Unit operator-(const Unit& other) const
-    {
-        return Unit(_value - other.getValue());
-    }
+    Unit operator-(const Unit& other) const { return Unit(_value - other.getValue()); }
 
     Unit& operator+=(const Unit& other)
     {

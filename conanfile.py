@@ -29,5 +29,9 @@ class RevConan(ConanFile):
         self.copy("engine/lib/librev.a", dst="lib", keep_path=False)
 
     def package_info(self):
+        if not self.in_local_cache:
+            self.cpp_info.libdirs = ["build/engine/lib"]
+            self.cpp_info.includedirs = ["engine/include"]
+        
         self.cpp_info.libs = ["rev"]
 
