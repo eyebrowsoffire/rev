@@ -1,5 +1,8 @@
 #include "rev/physics/Particle.h"
 
+#include <glm/ext.hpp>
+#include <gsl/gsl_assert>
+
 namespace rev::physics {
 void Particle::setMass(Mass<float> mass) { _mass = mass; }
 
@@ -9,7 +12,12 @@ void Particle::setDamping(float damping) { _damping = damping; }
 
 float Particle::getDamping() const { return _damping; }
 
-void Particle::addImpulse(const Momentum<glm::vec3>& impulse) { _accumulatedImpulse += impulse; }
+void Particle::addImpulse(const Momentum<glm::vec3>& impulse)
+{
+    Expects(!glm::any(glm::isnan(impulse.getValue())));
+    Expects(!glm::any(glm::isinf(impulse.getValue())));
+    _accumulatedImpulse += impulse;
+}
 
 void Particle::flushImpulses()
 {
