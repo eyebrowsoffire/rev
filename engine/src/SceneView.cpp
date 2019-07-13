@@ -53,7 +53,11 @@ namespace {
             vec3 lightVector = lightPosition - fragmentPosition;
 
             float attenuation = 1.0f / (1.0f + 0.01 * dot(lightVector, lightVector));
-            float angleMultiplier = max(dot(normalize(lightVector), normalize(normal)), 0.0f);
+            float angleMultiplier = dot(normalize(lightVector), normalize(normal));
+            if (angleMultiplier < 0.0f)
+            {
+                discard;
+            }
 
             float specularExponent = texture(specularExponent, texCoord).r;
             vec3 specularCoefficient = texture(specular, texCoord).rgb;

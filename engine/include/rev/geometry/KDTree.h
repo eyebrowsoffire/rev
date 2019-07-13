@@ -212,9 +212,9 @@ private:
         } else if (position > node.split.boundary) {
             goLeft = false;
         } else if (ray.direction[node.split.dimensionIndex] < 0.0f) {
-            goLeft = true;
-        } else if (ray.direction[node.split.dimensionIndex] > 0.0f) {
             goLeft = false;
+        } else if (ray.direction[node.split.dimensionIndex] > 0.0f) {
+            goLeft = true;
         } else {
             return std::nullopt;
         }
@@ -345,6 +345,10 @@ class KDTreeBuilder {
 public:
     void addTriangle(std::array<glm::vec3, 3> vertices, SurfaceData data)
     {
+        Expects(!glm::any(glm::isnan(vertices[0])));
+        Expects(!glm::any(glm::isnan(vertices[1])));
+        Expects(!glm::any(glm::isnan(vertices[2])));
+
         auto triangle
             = std::make_unique<Triangle<SurfaceData>>(Triangle<SurfaceData>{ vertices, data });
         auto boundingBox = smallestBoxContainingVertices(vertices);
