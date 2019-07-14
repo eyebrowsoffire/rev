@@ -19,11 +19,13 @@ public:
 // {
 //   public:
 //     // Models must specify an object type that represents a single instance
-//     of this model. using SceneObjectType;
+//     // of this model.
+//     using SceneObjectType;
 //
 //     // Renders the group of objects from the viewpoint of the passed in
-//     camera. void render(Camera& camera, const
-//     std::vector<std::shared_ptr<SceneObjectType>>& objects);
+//     // camera.
+//     void render(Camera& camera,
+//                 const std::vector<std::shared_ptr<SceneObjectType>>& objects);
 // };
 
 // Encapsulates a group of objects that all render with the same model.
@@ -40,10 +42,7 @@ public:
     {
     }
 
-    ModelType &getModel()
-    {
-        return _model;
-    }
+    ModelType& getModel() { return _model; }
 
     // Renders all the objects in the group. Used by the rendering engine.
     void render(Camera& camera) override { _model.render(camera, _objects); }

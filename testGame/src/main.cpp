@@ -5,7 +5,6 @@
 #include <rev/IActor.h>
 #include <rev/IKeyboardListener.h>
 #include <rev/IMouseListener.h>
-#include <rev/Light.h>
 #include <rev/MtlFile.h>
 #include <rev/NurbsCurve.h>
 #include <rev/ObjFile.h>
@@ -15,6 +14,7 @@
 #include <rev/TrackModel.h>
 #include <rev/WavefrontHelpers.h>
 #include <rev/Window.h>
+#include <rev/lights/PointLight.h>
 #include <rev/physics/Gravity.h>
 #include <rev/physics/Particle.h>
 #include <rev/physics/System.h>
@@ -72,14 +72,14 @@ std::vector<glm::vec3> buildFlatNormalsForVertices(gsl::span<const glm::vec3> ve
     return normals;
 }
 
-class RotatingCameraController : public rev::IActor {
+class RotatingCameraController : public IActor {
 public:
-    RotatingCameraController(std::shared_ptr<rev::Camera> camera)
+    RotatingCameraController(std::shared_ptr<Camera> camera)
         : _camera(std::move(camera))
     {
     }
 
-    void tick(rev::Environment& environment, rev::Duration) override
+    void tick(rev::Environment& environment, Duration) override
     {
         using FloatSeconds = std::chrono::duration<float>;
 
@@ -93,28 +93,25 @@ public:
         _camera->setPosition({ x, y, z });
     }
 
-    void kill(rev::Environment&) override {}
+    void kill(Environment&) override {}
 
 private:
-    std::shared_ptr<rev::Camera> _camera;
+    std::shared_ptr<Camera> _camera;
 };
 
-class UserCameraController : public rev::IMouseListener,
-                             public rev::IKeyboardListener,
-                             public rev::IActor {
+class UserCameraController : public IMouseListener, public IKeyboardListener, public IActor {
 public:
-    UserCameraController(
-        std::shared_ptr<rev::Camera> camera, const rev::Point<double>& initialPosition)
+    UserCameraController(std::shared_ptr<Camera> camera, const rev::Point<double>& initialPosition)
         : _camera(std::move(camera))
         , _lastPosition(initialPosition)
     {
     }
 
-    void buttonPressed(rev::MouseButton) override {}
+    void buttonPressed(MouseButton) override {}
 
-    void buttonReleased(rev::MouseButton) override {}
+    void buttonReleased(MouseButton) override {}
 
-    void moved(rev::Point<double> position) override
+    void moved(Point<double> position) override
     {
         constexpr float sensitivity = 0.01f;
         float xDelta = static_cast<float>(position.x - _lastPosition.x) * sensitivity;
@@ -142,19 +139,19 @@ public:
 
     void scrolled(double, double) override {}
 
-    void keyPressed(rev::KeyboardKey key) override
+    void keyPressed(KeyboardKey key) override
     {
         switch (key) {
-        case rev::KeyboardKey::W:
+        case KeyboardKey::W:
             _zSpeed += 1.0f;
             break;
-        case rev::KeyboardKey::S:
+        case KeyboardKey::S:
             _zSpeed -= 1.0f;
             break;
-        case rev::KeyboardKey::A:
+        case KeyboardKey::A:
             _xSpeed -= 1.0f;
             break;
-        case rev::KeyboardKey::D:
+        case KeyboardKey::D:
             _xSpeed += 1.0f;
             break;
         default:
@@ -162,19 +159,19 @@ public:
         }
     }
 
-    void keyReleased(rev::KeyboardKey key) override
+    void keyReleased(KeyboardKey key) override
     {
         switch (key) {
-        case rev::KeyboardKey::W:
+        case KeyboardKey::W:
             _zSpeed -= 1.0f;
             break;
-        case rev::KeyboardKey::S:
+        case KeyboardKey::S:
             _zSpeed += 1.0f;
             break;
-        case rev::KeyboardKey::A:
+        case KeyboardKey::A:
             _xSpeed += 1.0f;
             break;
-        case rev::KeyboardKey::D:
+        case KeyboardKey::D:
             _xSpeed -= 1.0f;
             break;
         default:
@@ -182,7 +179,7 @@ public:
         }
     }
 
-    void tick(rev::Environment&, rev::Duration elapsedTime) override
+    void tick(Environment&, Duration elapsedTime) override
     {
         if ((abs(_zSpeed) <= 0.01f) && (abs(_xSpeed) <= 0.01f)) {
             return;
@@ -206,19 +203,19 @@ public:
         _camera->setTarget(target + movementVector);
     }
 
-    void kill(rev::Environment&) override {}
+    void kill(Environment&) override {}
 
 private:
-    std::shared_ptr<rev::Camera> _camera;
-    rev::Point<double> _lastPosition{ 0.0, 0.0 };
+    std::shared_ptr<Camera> _camera;
+    Point<double> _lastPosition{ 0.0, 0.0 };
     float _zSpeed = 0.0f;
     float _xSpeed = 0.0f;
 };
 
-class BikeController : public rev::IActor, public rev::IKeyboardListener {
+class BikeController : public IActor, public IKeyboardListener {
 public:
-    BikeController(std::shared_ptr<rev::physics::Particle> particle,
-        std::shared_ptr<rev::CompositeObject> sceneObject)
+    BikeController(
+        std::shared_ptr<physics::Particle> particle, std::shared_ptr<CompositeObject> sceneObject)
         : _particle(std::move(particle))
         , _sceneObject(std::move(sceneObject))
     {
@@ -226,12 +223,12 @@ public:
         Expects(_sceneObject != nullptr);
     }
 
-    void tick(rev::Environment&, rev::Duration elapsedTime) override
+    void tick(Environment&, Duration elapsedTime) override
     {
         if (_thrustersOn) {
-            rev::physics::Force<glm::vec3> force(0.0f, 7000.0f, 0.0f);
+            physics::Force<glm::vec3> force(0.0f, 7000.0f, 0.0f);
 
-            _particle->addImpulse(force * rev::physics::durationToPhysicsTime(elapsedTime));
+            _particle->addImpulse(force * physics::durationToPhysicsTime(elapsedTime));
         }
 
         const auto& currentPosition = _particle->getPosition().getValue();
@@ -245,33 +242,33 @@ public:
             _particle->setVelocity(newVelocity);
         }
 
-        glm::mat4 identity{1.0f};
+        glm::mat4 identity{ 1.0f };
         _sceneObject->transform = glm::translate(identity, _particle->getPosition().getValue());
     }
 
-    void kill(rev::Environment& environment) override {}
+    void kill(Environment& environment) override {}
 
-    void keyPressed(rev::KeyboardKey key) override
+    void keyPressed(KeyboardKey key) override
     {
-        if (key == rev::KeyboardKey::Space) {
+        if (key == KeyboardKey::Space) {
             _thrustersOn = true;
         }
     }
 
-    void keyReleased(rev::KeyboardKey key) override
+    void keyReleased(KeyboardKey key) override
     {
-        if (key == rev::KeyboardKey::Space) {
+        if (key == KeyboardKey::Space) {
             _thrustersOn = false;
         }
     }
 
 private:
-    std::shared_ptr<rev::physics::Particle> _particle;
-    std::shared_ptr<rev::CompositeObject> _sceneObject;
+    std::shared_ptr<physics::Particle> _particle;
+    std::shared_ptr<CompositeObject> _sceneObject;
     bool _thrustersOn = false;
 };
 
-class CameraRayCaster : public rev::IActor {
+class CameraRayCaster : public IActor {
 public:
     CameraRayCaster(std::shared_ptr<Camera> camera, std::shared_ptr<DebugOverlay> overlay,
         TrackModel& trackModel)
@@ -281,7 +278,7 @@ public:
     {
     }
 
-    void tick(rev::Environment&, rev::Duration) override
+    void tick(Environment&, Duration) override
     {
         glm::vec3 origin = _camera->getPosition();
         glm::vec3 target = _camera->getTarget();
@@ -299,7 +296,7 @@ public:
         }
     }
 
-    void kill(rev::Environment&) override {}
+    void kill(Environment&) override {}
 
 private:
     std::shared_ptr<Camera> _camera;
@@ -312,13 +309,13 @@ private:
 
 int main(void)
 {
-    rev::Engine engine;
+    Engine engine;
     auto window = engine.createWindow("Test Game", { 1280, 720 });
     window->makeCurrent();
 
     auto sceneView = engine.createSceneView();
     sceneView->setOutputSize({ 320, 180 });
-    //sceneView->setOutputSize({1280, 720});
+    // sceneView->setOutputSize({1280, 720});
 
     auto scene = engine.createScene();
     sceneView->setScene(scene);
@@ -327,10 +324,10 @@ int main(void)
     auto verticesSpan = gsl::span<const glm::vec3>(kCubeVertices);
     auto normals = buildFlatNormalsForVertices(verticesSpan);
 
-    rev::ObjFile meshFile("assets/hoverbike.obj");
-    rev::MtlFile materialsFile("assets/hoverbike.mtl");
-    rev::ProgramFactory factory;
-    auto objectGroup = rev::createObjectGroupFromWavefrontFiles(factory, meshFile, materialsFile);
+    ObjFile meshFile("assets/hoverbike.obj");
+    MtlFile materialsFile("assets/hoverbike.mtl");
+    ProgramFactory factory;
+    auto objectGroup = createObjectGroupFromWavefrontFiles(factory, meshFile, materialsFile);
     auto object = objectGroup->addObject();
     scene->addObjectGroup(objectGroup);
 
@@ -380,11 +377,11 @@ int main(void)
 
     NurbsCurve<glm::vec3> curve(3, knots, controlPoints);
 
-    auto trackGroup = std::make_shared<rev::SceneObjectGroup<rev::TrackModel>>(
-        factory, curve, width, segmentCount);
+    auto trackGroup
+        = std::make_shared<SceneObjectGroup<TrackModel>>(factory, curve, width, segmentCount);
     scene->addObjectGroup(trackGroup);
 
-    auto physicsSystem = std::make_shared<rev::physics::System>();
+    auto physicsSystem = std::make_shared<physics::System>();
     auto bikeParticle = physicsSystem->addParticle();
     bikeParticle->setMass(500.0f);
 
@@ -394,15 +391,18 @@ int main(void)
 
     auto bikeController = std::make_shared<BikeController>(bikeParticle, object);
 
-    auto yellowLight = scene->addLight();
+    auto lightGroup = std::make_shared<SceneObjectGroup<PointLightModel>>(factory);
+    scene->addLightGroup(lightGroup);
+
+    auto yellowLight = lightGroup->addObject();
     yellowLight->setPosition(glm::vec3(4.0f, 3.0f, 3.0f));
     yellowLight->setBaseColor(glm::vec3(1.0f, 1.0f, 0.8f));
 
-    auto blueLight = scene->addLight();
+    auto blueLight = lightGroup->addObject();
     blueLight->setPosition(glm::vec3(-1.5f, -2.0f, 1.5f));
     blueLight->setBaseColor(glm::vec3(0.2f, 0.2f, 1.0f));
 
-    auto orangeLight = scene->addLight();
+    auto orangeLight = lightGroup->addObject();
     orangeLight->setPosition(glm::vec3(3.0f, 0.75f, -2.5f));
     orangeLight->setBaseColor(glm::vec3(1.0f, 0.3f, 0.0f));
 
@@ -417,8 +417,7 @@ int main(void)
     window->addKeyboardListener(cameraController);
     window->addKeyboardListener(bikeController);
 
-    auto debugOverlayGroup
-        = std::make_shared<rev::SceneObjectGroup<rev::DebugOverlayModel>>(factory);
+    auto debugOverlayGroup = std::make_shared<SceneObjectGroup<DebugOverlayModel>>(factory);
     auto debugOverlay = debugOverlayGroup->addObject();
     sceneView->addDebugOverlayGroup(debugOverlayGroup);
 

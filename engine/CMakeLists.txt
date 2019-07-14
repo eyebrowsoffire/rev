@@ -14,7 +14,6 @@ target_sources(rev PRIVATE
   include/rev/IActor.h
   include/rev/IKeyboardListener.h
   include/rev/IntegerSequenceUtilities.h
-  include/rev/Light.h
   include/rev/MaterialProperties.h
   include/rev/Mesh.h
   include/rev/MtlFile.h
@@ -34,6 +33,8 @@ target_sources(rev PRIVATE
 
   include/rev/geometry/KDTree.h
   include/rev/geometry/Tools.h
+
+  include/rev/lights/PointLight.h
 
   include/rev/physics/Gravity.h
   include/rev/physics/Particle.h
@@ -55,17 +56,19 @@ target_sources(rev PRIVATE
   src/DebugOverlay.cpp
   src/Engine.cpp
   src/Environment.cpp
-  src/Light.cpp
   src/MtlFile.cpp
   src/ObjFile.cpp
-  src/physics/Gravity.cpp
-  src/physics/Particle.cpp
-  src/physics/System.cpp
   src/Scene.cpp
   src/SceneView.cpp
   src/TrackModel.cpp
   src/WavefrontHelpers.cpp
   src/Window.cpp
+
+  src/lights/PointLight.cpp
+
+  src/physics/Gravity.cpp
+  src/physics/Particle.cpp
+  src/physics/System.cpp
 )
 
 target_include_directories(rev PUBLIC include)

@@ -36,7 +36,6 @@ private:
     std::shared_ptr<Camera> _camera;
 
     RectSize<GLsizei> _outputSize;
-    ProgramResource _lightingProgram;
 
     struct WorldSpaceNormalProperty {
     };
@@ -85,13 +84,6 @@ private:
         GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE>;
     using LightingStage = RenderStage<OutputColorAttachment>;
     LightingStage _lightingStage;
-
-    VertexArray _fullScreenVao;
-    Buffer _fullScreenVertexBuffer;
-
-    Uniform<glm::vec3> _lightPosition;
-    Uniform<glm::vec3> _lightBaseColor;
-    Uniform<glm::vec3> _camPosition;
 
     std::vector<std::shared_ptr<ISceneObjectGroup>> _debugGroups;
 };

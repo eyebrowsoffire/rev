@@ -15,17 +15,15 @@ class SceneObject;
 
 class Scene {
 public:
-    std::shared_ptr<Light> addLight();
-
     void renderAllObjects(Camera& camera);
-    void renderAllLights(Uniform<glm::vec3>& lightPositionUniform,
-        Uniform<glm::vec3>& lightBaseColor);
+    void renderAllLights(Camera& camera);
 
     void addObjectGroup(std::shared_ptr<ISceneObjectGroup> group);
+    void addLightGroup(std::shared_ptr<ISceneObjectGroup> group);
 
 private:
     std::vector<std::shared_ptr<ISceneObjectGroup>> _objectGroups;
-    std::set<std::shared_ptr<Light>> _lights;
+    std::vector<std::shared_ptr<ISceneObjectGroup>> _lightGroups;
 };
 
 } // namespace rev

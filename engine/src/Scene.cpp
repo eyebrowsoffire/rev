@@ -1,19 +1,15 @@
 #include "rev/Scene.h"
 
-#include "rev/Light.h"
-
 namespace rev {
-
-std::shared_ptr<Light> Scene::addLight()
-{
-    auto light = std::make_shared<Light>();
-    _lights.insert(light);
-    return std::move(light);
-}
 
 void Scene::addObjectGroup(std::shared_ptr<ISceneObjectGroup> group)
 {
     _objectGroups.push_back(std::move(group));
+}
+
+void Scene::addLightGroup(std::shared_ptr<ISceneObjectGroup> group)
+{
+    _lightGroups.push_back(std::move(group));
 }
 
 void Scene::renderAllObjects(Camera& camera)
@@ -23,14 +19,10 @@ void Scene::renderAllObjects(Camera& camera)
     }
 }
 
-void Scene::renderAllLights(Uniform<glm::vec3>& lightPositionUniform,
-    Uniform<glm::vec3>& lightBaseColor)
+void Scene::renderAllLights(Camera& camera)
 {
-    for (const auto& light : _lights) {
-        lightPositionUniform.set(light->getPosition());
-        lightBaseColor.set(light->getBaseColor());
-
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+    for (const auto& lightGroup : _lightGroups) {
+        lightGroup->render(camera);
     }
 }
 
