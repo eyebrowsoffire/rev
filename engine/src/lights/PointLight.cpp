@@ -21,7 +21,7 @@ public:
     PointLightProgram(ProgramResource resource)
         : _resource(std::move(resource))
     {
-        camPosition = _resource.getUniform<glm::vec3>("camPosition");
+        view = _resource.getUniform<glm::mat4>("view");
 
         lightPosition = _resource.getUniform<glm::vec3>("lightPosition");
         lightBaseColor = _resource.getUniform<glm::vec3>("lightBaseColor");
@@ -39,7 +39,7 @@ public:
 
     ProgramContext prepareContext() { return ProgramContext(_resource); }
 
-    Uniform<glm::vec3> camPosition;
+    Uniform<glm::mat4> view;
 
     Uniform<glm::vec3> lightPosition;
     Uniform<glm::vec3> lightBaseColor;
@@ -75,7 +75,7 @@ void main()
 #version 330 core
 in vec2 texCoord;
 
-uniform vec3 camPosition;
+uniform mat4 view;
 
 uniform vec3 lightPosition;
 uniform vec3 lightBaseColor;
@@ -105,7 +105,8 @@ void main()
     vec3 normal = texture(normals, texCoord).rgb;
     vec3 diffuse = texture(diffuse, texCoord).rgb;
     vec3 fragmentPosition = texture(fragPosition, texCoord).rgb;
-    vec3 lightVector = lightPosition - fragmentPosition;
+    vec4 viewSpaceLightPosition = view * vec4(lightPosition, 1.0f);
+    vec3 lightVector = viewSpaceLightPosition.xyz - fragmentPosition;
 
     float attenuation = getAttenuation(length(lightVector));
     float angleMultiplier = dot(normalize(lightVector), normalize(normal));
@@ -116,7 +117,7 @@ void main()
 
     float specularExponent = texture(specularExponent, texCoord).r;
     vec3 specularCoefficient = texture(specular, texCoord).rgb;
-    vec3 eyeVector = normalize(camPosition - fragmentPosition);
+    vec3 eyeVector = normalize(-fragmentPosition);
     vec3 reflectVector = normalize(reflect(lightVector, normalize(normal)));
 
     float specularComponent = max(dot(eyeVector, reflectVector), 0.0f);
@@ -182,7 +183,7 @@ void PointLightModel::render(Camera& camera, const std::vector<std::shared_ptr<P
     }
 
     auto programContext = _program->prepareContext();
-    _program->camPosition.set(camera.getPosition());
+    _program->view.set(camera.getViewMatrix());
 
     VertexArrayContext vaoContext(_vao);
     for (const auto light : lights) {

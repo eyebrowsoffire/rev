@@ -37,9 +37,9 @@ private:
 
     RectSize<GLsizei> _outputSize;
 
-    struct WorldSpaceNormalProperty {
+    struct ViewSpaceNormalProperty {
     };
-    struct WorldSpacePositionProperty {
+    struct ViewSpacePositionProperty {
     };
     struct AmbientMaterialProperty {
     };
@@ -54,9 +54,9 @@ private:
     struct DepthProperty {
     };
 
-    using WorldSpacePositionAttachment = RenderStageAttachment<WorldSpacePositionProperty, GL_COLOR_ATTACHMENT0,
+    using ViewSpacePositionAttachment = RenderStageAttachment<ViewSpacePositionProperty, GL_COLOR_ATTACHMENT0,
         GL_RGB16F, GL_RGB, GL_FLOAT>;
-    using WorldSpaceNormalAttachment = RenderStageAttachment<WorldSpaceNormalProperty, GL_COLOR_ATTACHMENT1,
+    using ViewSpaceNormalAttachment = RenderStageAttachment<ViewSpaceNormalProperty, GL_COLOR_ATTACHMENT1,
         GL_RGB16F, GL_RGB, GL_FLOAT>;
     using AmbientAttachment = RenderStageAttachment<AmbientMaterialProperty, GL_COLOR_ATTACHMENT2,
         GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE>;
@@ -72,7 +72,7 @@ private:
         GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT,
         GL_UNSIGNED_BYTE>;
 
-    using GeometryStage = RenderStage<WorldSpacePositionAttachment, WorldSpaceNormalAttachment,
+    using GeometryStage = RenderStage<ViewSpacePositionAttachment, ViewSpaceNormalAttachment,
         AmbientAttachment, EmissiveAttachment, DiffuseAttachment,
         SpecularAttachment, SpecularExponentAttachment,
         DepthAttachment>;

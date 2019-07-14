@@ -61,12 +61,12 @@ public:
 
                 void main()
                 {
-                    vec4 worldSpacePosition = model * vec4(vPosition, 1.0f);
-                    gl_Position = projection * view * worldSpacePosition;
+                    vec4 viewSpacePosition = view * model * vec4(vPosition, 1.0f);
+                    gl_Position = projection * viewSpacePosition;
 
-                    vec4 worldSpaceNormal = model * vec4(vNormal, 0.0f);
-                    fNormal = normalize(worldSpaceNormal.xyz);
-                    fPosition = worldSpacePosition.xyz;
+                    vec4 viewSpaceNormal = view * model * vec4(vNormal, 0.0f);
+                    fNormal = normalize(viewSpaceNormal.xyz);
+                    fPosition = viewSpacePosition.xyz;
                 }
             )vertexShader";
         }

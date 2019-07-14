@@ -60,10 +60,10 @@ void SceneView::render()
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(
-            GL_TEXTURE_2D, _geometryStage.getOutputTexture<WorldSpacePositionProperty>().getId());
+            GL_TEXTURE_2D, _geometryStage.getOutputTexture<ViewSpacePositionProperty>().getId());
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(
-            GL_TEXTURE_2D, _geometryStage.getOutputTexture<WorldSpaceNormalProperty>().getId());
+            GL_TEXTURE_2D, _geometryStage.getOutputTexture<ViewSpaceNormalProperty>().getId());
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(
             GL_TEXTURE_2D, _geometryStage.getOutputTexture<AmbientMaterialProperty>().getId());
