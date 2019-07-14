@@ -19,11 +19,13 @@ namespace {
 class PointLightProgram {
 public:
     PointLightProgram(ProgramResource resource)
-    : _resource(std::move(resource))
+        : _resource(std::move(resource))
     {
+        camPosition = _resource.getUniform<glm::vec3>("camPosition");
+
         lightPosition = _resource.getUniform<glm::vec3>("lightPosition");
         lightBaseColor = _resource.getUniform<glm::vec3>("lightBaseColor");
-        camPosition = _resource.getUniform<glm::vec3>("camPosition");
+        falloffCoefficients = _resource.getUniform<glm::vec3>("falloffCoefficients");
 
         fragPosition = _resource.getUniform<GLint>("fragPosition");
         normals = _resource.getUniform<GLint>("normals");
@@ -37,9 +39,11 @@ public:
 
     ProgramContext prepareContext() { return ProgramContext(_resource); }
 
+    Uniform<glm::vec3> camPosition;
+
     Uniform<glm::vec3> lightPosition;
     Uniform<glm::vec3> lightBaseColor;
-    Uniform<glm::vec3> camPosition;
+    Uniform<glm::vec3> falloffCoefficients;
 
     Uniform<GLint> fragPosition;
     Uniform<GLint> normals;
@@ -70,9 +74,12 @@ void main()
             return R"fragmentShader(
 #version 330 core
 in vec2 texCoord;
+
+uniform vec3 camPosition;
+
 uniform vec3 lightPosition;
 uniform vec3 lightBaseColor;
-uniform vec3 camPosition;
+uniform vec3 falloffCoefficients;
 
 uniform sampler2D fragPosition;
 uniform sampler2D normals;
@@ -85,6 +92,14 @@ uniform sampler2D specularExponent;
 
 out vec4 fragColor;
 
+float getAttenuation(float distance)
+{
+    float constant = falloffCoefficients[0];
+    float linear = falloffCoefficients[1] * distance;
+    float quadratic = falloffCoefficients[2] * distance * distance;
+    return 1.0f / (constant + linear + quadratic);
+}
+
 void main() 
 {
     vec3 normal = texture(normals, texCoord).rgb;
@@ -92,7 +107,7 @@ void main()
     vec3 fragmentPosition = texture(fragPosition, texCoord).rgb;
     vec3 lightVector = lightPosition - fragmentPosition;
 
-    float attenuation = 1.0f / (1.0f + 0.01 * dot(lightVector, lightVector));
+    float attenuation = getAttenuation(length(lightVector));
     float angleMultiplier = dot(normalize(lightVector), normalize(normal));
     if (angleMultiplier < 0.0f)
     {
@@ -173,6 +188,7 @@ void PointLightModel::render(Camera& camera, const std::vector<std::shared_ptr<P
     for (const auto light : lights) {
         _program->lightPosition.set(light->getPosition());
         _program->lightBaseColor.set(light->getBaseColor());
+        _program->falloffCoefficients.set(light->getFalloffCoefficients());
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 }
