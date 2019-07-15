@@ -391,20 +391,25 @@ int main(void)
 
     auto bikeController = std::make_shared<BikeController>(bikeParticle, object);
 
-    auto lightGroup = std::make_shared<SceneObjectGroup<PointLightModel>>(factory);
-    scene->addLightGroup(lightGroup);
+    auto pointLightGroup = std::make_shared<SceneObjectGroup<PointLightModel>>(factory);
+    scene->addLightGroup(pointLightGroup);
 
     auto directionalLightGroup = std::make_shared<SceneObjectGroup<DirectionalLightModel>>(factory);
     scene->addLightGroup(directionalLightGroup);
 
+    auto spotLightGroup = std::make_shared<SceneObjectGroup<SpotLightModel>>(factory);
+    scene->addLightGroup(spotLightGroup);
+
     auto yellowLight = directionalLightGroup->addObject();
     yellowLight->setBaseColor(glm::vec3(0.25f, 0.25f, 0.25f));
 
-    auto blueLight = lightGroup->addObject();
-    blueLight->setPosition(glm::vec3(-1.5f, -2.0f, 1.5f));
-    blueLight->setBaseColor(glm::vec3(0.2f, 0.2f, 1.0f));
+    auto blueLight = spotLightGroup->addObject();
+    blueLight->setPosition(glm::vec3(25.0f, 3.0f, 20.0f));
+    blueLight->setBaseColor(glm::vec3(0.6f, 0.6f, 1.0f));
+    blueLight->setConeAngle(0.75f);
+    blueLight->setSoftAngleThreshold(0.05f);
 
-    auto orangeLight = lightGroup->addObject();
+    auto orangeLight = pointLightGroup->addObject();
     orangeLight->setPosition(glm::vec3(3.0f, 0.75f, -2.5f));
     orangeLight->setBaseColor(glm::vec3(1.0f, 0.3f, 0.0f));
 
@@ -421,7 +426,7 @@ int main(void)
 
     auto debugOverlayGroup = std::make_shared<SceneObjectGroup<DebugOverlayModel>>(factory);
     auto debugOverlay = debugOverlayGroup->addObject();
-    sceneView->addDebugOverlayGroup(debugOverlayGroup);
+    //sceneView->addDebugOverlayGroup(debugOverlayGroup);
 
     auto cameraRayCaster
         = std::make_shared<CameraRayCaster>(camera, debugOverlay, trackGroup->getModel());

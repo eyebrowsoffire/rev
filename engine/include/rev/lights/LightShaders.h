@@ -64,6 +64,44 @@ RayInfo getRayInfo(vec3 fragmentPosition)
 }
 )pointLight";
 
+constexpr std::string_view kSpotLightComponents = R"spotLight(
+uniform vec3 lightPosition;
+uniform vec3 lightDirection;
+uniform vec3 lightBaseColor;
+uniform vec3 falloffCoefficients;
+uniform float cosineConeAngle;
+uniform float softCosineThreshold;
+
+float getAttenuation(float distance)
+{
+    float constant = falloffCoefficients[0];
+    float linear = falloffCoefficients[1] * distance;
+    float quadratic = falloffCoefficients[2] * distance * distance;
+    return 1.0f / (constant + linear + quadratic);
+}
+
+RayInfo getRayInfo(vec3 fragmentPosition)
+{
+    RayInfo info;
+
+    vec3 lightVector = fragmentPosition - lightPosition;
+    info.attenuation = getAttenuation(length(lightVector));
+    info.lightVector = normalize(lightVector);
+
+    float cosineAngle = dot(info.lightVector, lightDirection);
+    float difference = cosineAngle - cosineConeAngle;
+
+    if(softCosineThreshold > 0.0f)
+    {
+        info.attenuation *= clamp(difference / softCosineThreshold, 0.0f, 1.0f);
+    } else if (difference < 0.0f) {
+        info.attenuation = 0.0f;
+    }
+
+    return info;
+}
+)spotLight";
+
 constexpr std::string_view kDirectionalLightComponents = R"dirLight(
 uniform vec3 lightDirection;
 uniform vec3 lightBaseColor;
@@ -193,4 +231,40 @@ public:
     Uniform<glm::vec3> lightDirection;
     Uniform<glm::vec3> lightBaseColor;
 };
+
+class SpotLightProgram : public LightProgram {
+public:
+    SpotLightProgram(ProgramResource resource)
+        : LightProgram(std::move(resource))
+    {
+        lightPosition = _resource.getUniform<glm::vec3>("lightPosition");
+        lightDirection = _resource.getUniform<glm::vec3>("lightDirection");
+        lightBaseColor = _resource.getUniform<glm::vec3>("lightBaseColor");
+        falloffCoefficients = _resource.getUniform<glm::vec3>("falloffCoefficients");
+        cosineConeAngle = _resource.getUniform<float>("cosineConeAngle");
+        softCosineThreshold = _resource.getUniform<float>("softCosineThreshold");
+    }
+
+    Uniform<glm::vec3> lightPosition;
+    Uniform<glm::vec3> lightDirection;
+    Uniform<glm::vec3> lightBaseColor;
+    Uniform<glm::vec3> falloffCoefficients;
+    Uniform<float> cosineConeAngle;
+    Uniform<float> softCosineThreshold;
+
+
+    struct Source {
+        static std::string_view getVertexSource() { return kVertexShader; }
+
+        static std::array<std::string_view, 3> getFragmentSource()
+        {
+            return {
+                kFragmentSharedDeclarations,
+                kSpotLightComponents,
+                kFragmentMain,
+            };
+        }
+    };
+};
+
 }
