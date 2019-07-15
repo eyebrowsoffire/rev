@@ -34,7 +34,8 @@ target_sources(rev PRIVATE
   include/rev/geometry/KDTree.h
   include/rev/geometry/Tools.h
 
-  include/rev/lights/PointLight.h
+  include/rev/lights/LightShaders.h
+  include/rev/lights/LightModels.h
 
   include/rev/physics/Gravity.h
   include/rev/physics/Particle.h
@@ -64,7 +65,7 @@ target_sources(rev PRIVATE
   src/WavefrontHelpers.cpp
   src/Window.cpp
 
-  src/lights/PointLight.cpp
+  src/lights/LightModel.cpp
 
   src/physics/Gravity.cpp
   src/physics/Particle.cpp

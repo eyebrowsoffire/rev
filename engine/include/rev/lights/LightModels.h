@@ -12,9 +12,14 @@
 namespace rev {
 
 class PointLightProgram;
+class DirectionalLightProgram;
 
 class PointLight {
 public:
+    using LightProgram = PointLightProgram;
+
+    void setUniforms(Camera& camera, LightProgram& program);
+
     const glm::vec3& getBaseColor() const;
     void setBaseColor(const glm::vec3& color);
 
@@ -32,17 +37,40 @@ private:
     glm::vec3 _falloffCoefficients{ 1.0f, 0.0f, 0.1f };
 };
 
-class PointLightModel {
+class DirectionalLight {
 public:
-    using SceneObjectType = PointLight;
-    PointLightModel(ProgramFactory& factory);
+    using LightProgram = DirectionalLightProgram;
+
+    void setUniforms(Camera& camera, LightProgram& program);
+
+    const glm::vec3& getBaseColor() const;
+    void setBaseColor(const glm::vec3& color);
+
+    const glm::vec3& getDirection() const;
+    void setDirection(const glm::vec3& direction);
+
+private:
+    glm::vec3 _baseColor{ 1.0f, 1.0f, 1.0f };
+    glm::vec3 _direction{ 0.0f, -1.0f, 0.0f };
+};
+
+template <typename LightObjectType>
+class LightModel {
+public:
+    using SceneObjectType = LightObjectType;
+    using ProgramType = typename LightObjectType::LightProgram;
+
+    LightModel(ProgramFactory& factory);
 
     void render(Camera& camera, const std::vector<std::shared_ptr<SceneObjectType>>& objects);
 
 private:
-    std::shared_ptr<PointLightProgram> _program;
+    std::shared_ptr<ProgramType> _program;
     VertexArray _vao;
     Buffer _vertices;
 };
+
+using PointLightModel = LightModel<PointLight>;
+using DirectionalLightModel = LightModel<DirectionalLight>;
 
 } // namespace rev

@@ -4,6 +4,7 @@
 #include "rev/gl/Resource.h"
 #include "rev/gl/Uniform.h"
 
+#include <array>
 #include <gsl/gsl_assert>
 #include <string>
 
@@ -38,14 +39,22 @@ namespace detail {
 template <GLenum shaderType>
 class Shader : public Resource<createShader<shaderType>, gl::deleteShader> {
 public:
-    void setSource(std::string_view source)
+    void setSource(const std::string_view& source)
     {
-        auto* data = source.data();
-        auto length = source.size();
-        Expects(length <= std::numeric_limits<GLint>::max());
+        setSource(std::array<std::string_view, 1>{ source });
+    }
 
-        auto glLength = static_cast<GLint>(length);
-        glShaderSource(this->getId(), 1, &data, &glLength);
+    template <size_t arrayLength>
+    void setSource(const std::array<std::string_view, arrayLength>& source)
+    {
+        std::array<const char*, arrayLength> pointers;
+        std::array<GLint, arrayLength> lengths;
+        for (size_t i = 0; i < arrayLength; i++) {
+            pointers[i] = source[i].data();
+            lengths[i] = static_cast<GLint>(source[i].size());
+            Expects(source[i].size() <= std::numeric_limits<GLint>::max());
+        }
+        glShaderSource(this->getId(), arrayLength, pointers.data(), lengths.data());
     }
 
     void compile() { glCompileShader(this->getId()); }
@@ -88,8 +97,9 @@ public:
         return detail::extractLog<gl::getProgramiv, gl::getProgramInfoLog>(getId());
     }
 
-    void buildWithSource(std::string_view vertexSource,
-        std::string_view fragmentSource)
+    template <typename VertexSourceType, typename FragmentSourceType>
+    void buildWithSource(
+        const VertexSourceType& vertexSource, const FragmentSourceType& fragmentSource)
     {
         VertexShader vShader;
         vShader.setSource(vertexSource);

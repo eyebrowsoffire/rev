@@ -14,7 +14,7 @@
 #include <rev/TrackModel.h>
 #include <rev/WavefrontHelpers.h>
 #include <rev/Window.h>
-#include <rev/lights/PointLight.h>
+#include <rev/lights/LightModels.h>
 #include <rev/physics/Gravity.h>
 #include <rev/physics/Particle.h>
 #include <rev/physics/System.h>
@@ -394,9 +394,11 @@ int main(void)
     auto lightGroup = std::make_shared<SceneObjectGroup<PointLightModel>>(factory);
     scene->addLightGroup(lightGroup);
 
-    auto yellowLight = lightGroup->addObject();
-    yellowLight->setPosition(glm::vec3(4.0f, 3.0f, 3.0f));
-    yellowLight->setBaseColor(glm::vec3(1.0f, 1.0f, 0.8f));
+    auto directionalLightGroup = std::make_shared<SceneObjectGroup<DirectionalLightModel>>(factory);
+    scene->addLightGroup(directionalLightGroup);
+
+    auto yellowLight = directionalLightGroup->addObject();
+    yellowLight->setBaseColor(glm::vec3(0.25f, 0.25f, 0.25f));
 
     auto blueLight = lightGroup->addObject();
     blueLight->setPosition(glm::vec3(-1.5f, -2.0f, 1.5f));
