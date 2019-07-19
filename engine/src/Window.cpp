@@ -138,7 +138,8 @@ Window::Window(const std::string& title, const RectSize<int> size)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
+    glfwWindowHint(GLFW_DECORATED, false);
+    
     GLFWwindow* window = glfwCreateWindow(size.width, size.height, title.c_str(), NULL, NULL);
     if (window == nullptr) {
         throw std::runtime_error("Could not create GLFW window.");

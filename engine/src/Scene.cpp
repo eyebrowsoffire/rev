@@ -14,9 +14,14 @@ void Scene::addLightGroup(std::shared_ptr<ISceneObjectGroup> group)
 
 void Scene::renderAllObjects(Camera& camera)
 {
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
     for (const auto& objectGroup : _objectGroups) {
         objectGroup->render(camera);
     }
+    glDisable(GL_CULL_FACE);
 }
 
 void Scene::renderAllLights(Camera& camera)
