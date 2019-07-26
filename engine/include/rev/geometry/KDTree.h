@@ -28,6 +28,13 @@ struct Triangle {
         return box;
     }
 
+    glm::vec3 getNormal() const
+    {
+        auto e1 = vertices[1] - vertices[0];
+        auto e2 = vertices[2] - vertices[0];
+        return glm::normalize(glm::cross(e1, e2));
+    }
+
     std::array<AxisAlignedBoundingBox, 2> clipAndSplitBoundingBoxes(
         const AxisAlignedBoundingBox& clipBox, const AxisAlignedPlane& splitPlane)
     {
@@ -128,6 +135,97 @@ struct Triangle {
         float w = 1.0f - (u + v);
         return w * vertices[0] + u * vertices[1] + v * vertices[2];
     }
+
+    glm::vec2 cartesianToBarycentric(glm::vec3 position)
+    {
+        glm::vec3 v0 = vertices[1] - vertices[0];
+        glm::vec3 v1 = vertices[2] - vertices[0];
+        glm::vec3 v2 = position - vertices[0];
+
+        float d00 = glm::dot(v0, v0);
+        float d01 = glm::dot(v0, v1);
+        float d11 = glm::dot(v1, v1);
+        float d20 = glm::dot(v2, v0);
+        float d21 = glm::dot(v2, v1);
+        float denom = d00 * d11 - d01 * d01;
+
+        float v = (d11 * d20 - d01 * d21) / denom;
+        float w = (d00 * d21 - d01 * d20) / denom;
+        float u = 1.0f - v - w;
+
+        return { u, v };
+    }
+
+    std::optional<float> intersectsSphere(const Sphere& sphere)
+    {
+        glm::vec3 normal = getNormal();
+        float t = glm::dot(normal, (vertices[0] - sphere.center));
+        if (sphere.radius < abs(t)) {
+            // Closest point to the triangle is outside the sphere.
+            return std::nullopt;
+        }
+
+        glm::vec3 closestPoint = sphere.center - (normal * t);
+        glm::vec2 cpBary = cartesianToBarycentric(closestPoint);
+        size_t outsideCount = 0;
+        glm::bvec3 isOutside{};
+        if (cpBary[0] < 0.0f) {
+            outsideCount++;
+            isOutside[0] = true;
+        }
+
+        if (cpBary[1] < 0.0f) {
+            outsideCount++;
+            isOutside[1] = true;
+        }
+
+        if ((1.0f - (cpBary[0] + cpBary[1])) < 0.0f) {
+            outsideCount++;
+            isOutside[2] = true;
+        }
+
+        if (outsideCount == 0) {
+            // Closest point is inside the triangle and inside the sphere.
+            return t;
+        }
+
+        // Calculate the square of the radius of the cross section of the sphere passing through
+        // the triangle's plane.
+        float r2 = (sphere.radius * sphere.radius) - (t * t);
+
+        if (outsideCount == 1) {
+            // We need to find the distance to the edge (squared) here.
+            glm::vec3 edge;
+            glm::vec3 toVertex;
+            if (isOutside[0]) {
+                edge = vertices[2] - vertices[1];
+                toVertex = closestPoint - vertices[1];
+            } else if (isOutside[1]) {
+                edge = vertices[2] - vertices[0];
+                toVertex = closestPoint - vertices[0];
+            } else {
+                edge = vertices[1] - vertices[0];
+                toVertex = closestPoint - vertices[0];
+            }
+
+            float toVertexLength = glm::length(toVertex);
+            float legLength = glm::dot(edge, toVertex) / toVertexLength;
+
+            return ((toVertexLength * toVertexLength) - (legLength * legLength)) < r2;
+        }
+
+        // Otherwise, one of the vertices is actually the closest point on the triangle.
+        glm::vec3 toVertex;
+        if (!isOutside[0]) {
+            toVertex = closestPoint - vertices[0];
+        } else if (!isOutside[1]) {
+            toVertex = closestPoint - vertices[1];
+        } else {
+            toVertex = closestPoint - vertices[2];
+        }
+
+        return glm::dot(toVertex, toVertex) < r2;
+    }
 };
 
 template <typename SurfaceData>
@@ -179,6 +277,17 @@ public:
             }
             return getHit(*_root, ray, _boundingBox, *hit, maxDistance);
         }
+    }
+
+    template <typename Visitor>
+    void visitTrianglesIntersectingSphere(const Sphere& sphere, Visitor&& visitor) const
+    {
+        std::visit(
+            [this, &sphere, &visitor](const auto& node) {
+                visitTrianglesIntersectingSphereInNode(
+                    sphere, std::forward<Visitor>(visitor), _boundingBox, node);
+            },
+            *_root);
     }
 
     void dump() const
@@ -268,6 +377,45 @@ private:
         entryPoint = boxHit;
 
         return std::nullopt;
+    }
+
+    template <typename Visitor>
+    void visitTrianglesIntersectingSphereInNode(const Sphere& sphere, Visitor&& visitor,
+        const AxisAlignedBoundingBox& box, const LeafNode<SurfaceData>& node) const
+    {
+        if (!box.intersectsSphere(sphere)) {
+            return;
+        }
+
+        for (const auto& triangle : node.triangles) {
+            auto hit = triangle->intersectsSphere(sphere);
+            if (hit) {
+                visitor(*triangle, *hit);
+            }
+        }
+    }
+
+    template <typename Visitor>
+    void visitTrianglesIntersectingSphereInNode(const Sphere& sphere, Visitor&& visitor,
+        const AxisAlignedBoundingBox& box, const BranchNode<SurfaceData>& node) const
+    {
+        if (!box.intersectsSphere(sphere)) {
+            return;
+        }
+
+        auto [leftBox, rightBox] = box.split(node.split);
+        std::visit(
+            [this, leftBox = leftBox, &sphere, &visitor](const auto& node) {
+                visitTrianglesIntersectingSphereInNode(
+                    sphere, std::forward<Visitor>(visitor), leftBox, node);
+            },
+            *node.left);
+        std::visit(
+            [this, rightBox = rightBox, &sphere, &visitor](const auto& node) {
+                visitTrianglesIntersectingSphereInNode(
+                    sphere, std::forward<Visitor>(visitor), rightBox, node);
+            },
+            *node.right);
     }
 
     void printIndent(size_t indent = 0) const

@@ -16,6 +16,11 @@ struct Ray {
     glm::vec3 direction;
 };
 
+struct Sphere {
+    glm::vec3 center;
+    float radius;
+};
+
 template <typename VertexRange, typename SegmentVisitor>
 void iteratePolygonVertices(const VertexRange& vertices, SegmentVisitor&& visitor)
 {
@@ -196,6 +201,21 @@ struct AxisAlignedBoundingBox {
         }
 
         return true;
+    }
+
+    bool intersectsSphere(const Sphere& sphere) const
+    {
+        float r2 = sphere.radius * sphere.radius;
+        for (size_t k = 0; k < 3; k++) {
+            if (sphere.center[k] < minimum[k]) {
+                float diff = minimum[k] - sphere.center[k];
+                r2 -= diff * diff;
+            } else if (sphere.center[k] > maximum[k]) {
+                float diff = sphere.center[k] - maximum[k];
+                r2 -= diff * diff;
+            }
+        }
+        return r2 > 0.0f;
     }
 
     std::optional<Hit> castExternalRay(const Ray& ray) const

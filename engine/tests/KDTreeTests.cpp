@@ -59,5 +59,9 @@ TEST(KDTreeTests, BuildTreeWithSomeTriangles)
         { 3 });
 
     auto tree = builder.build();
+    Sphere sphere{glm::vec3{0.0f, 0.0f, 0.0f}, 4.0f};
+    tree.visitTrianglesIntersectingSphere(sphere, [](Triangle<TestSurfaceData> &, float) {
+
+    });
     tree.dump();
 }

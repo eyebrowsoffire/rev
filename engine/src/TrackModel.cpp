@@ -9,9 +9,13 @@
 namespace rev {
 
 namespace {
-    constexpr MaterialProperties kMaterialProperties{ glm::vec3(0.763975f, 0.763975f, 0.763975f),
-        glm::vec3(0.000000f, 0.000000f, 0.000000f), glm::vec3(0.114541f, 0.101377f, 0.288820f),
-        glm::vec3(0.6f, 0.6f, 0.6f), 445.098039f };
+    constexpr MaterialProperties kMaterialProperties{
+        glm::vec3(0.763975f, 0.763975f, 0.763975f),
+        glm::vec3(0.000000f, 0.000000f, 0.000000f),
+        glm::vec3(0.114541f, 0.101377f, 0.288820f),
+        glm::vec3(0.6f, 0.6f, 0.6f),
+        445.098039f,
+    };
 
     struct TrackVertexData {
         TrackVertexData(const glm::vec3& positionArg, const glm::vec3& normalArg)
