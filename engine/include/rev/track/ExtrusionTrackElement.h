@@ -23,7 +23,7 @@ public:
     void stamp(const glm::mat4& orientation) override;
     void finish() override;
 
-    Mesh buildMesh();
+    MeshBuilder<TrackVertexData>& getMeshBuilder();
 
 private:
     DieTemplate _dieTemplate;

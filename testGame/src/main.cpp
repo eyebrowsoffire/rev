@@ -270,14 +270,16 @@ private:
     bool _thrustersOn = false;
 };
 
-/*
+struct BlankSurfaceData {
+};
+
 class CameraRayCaster : public IActor {
 public:
     CameraRayCaster(std::shared_ptr<Camera> camera, std::shared_ptr<DebugOverlay> overlay,
-        TrackModel& trackModel)
+        KDTree<BlankSurfaceData> tree)
         : _camera(std::move(camera))
         , _overlay(std::move(overlay))
-        , _trackModel(trackModel)
+        , _tree(std::move(tree))
     {
     }
 
@@ -287,8 +289,8 @@ public:
         glm::vec3 target = _camera->getTarget();
         glm::vec3 direction = glm::normalize(target - origin);
         Ray cameraRay{ origin, direction };
-        auto hit = _trackModel.getSurfaceMap().castRay(cameraRay);
-        Triangle<TrackModel::SurfaceData>* newTarget = hit ? hit->triangle : nullptr;
+        auto hit = _tree.castRay(cameraRay);
+        Triangle<BlankSurfaceData>* newTarget = hit ? hit->triangle : nullptr;
         if (_target != newTarget) {
             _target = newTarget;
             if (_target) {
@@ -304,10 +306,9 @@ public:
 private:
     std::shared_ptr<Camera> _camera;
     std::shared_ptr<DebugOverlay> _overlay;
-    TrackModel& _trackModel;
-    Triangle<TrackModel::SurfaceData>* _target = nullptr;
+    KDTree<BlankSurfaceData> _tree;
+    Triangle<BlankSurfaceData>* _target = nullptr;
 };
-*/
 
 } // namespace
 
@@ -409,8 +410,11 @@ int main(void)
 
     buildTrack(config, trackElement);
 
-    auto trackGroup
-        = std::make_shared<SceneObjectGroup<TrackModel>>(factory, trackElement.buildMesh());
+    KDTreeBuilder<BlankSurfaceData> treeBuilder;
+    trackElement.getMeshBuilder().addTrianglesToTree(treeBuilder);
+
+    auto trackGroup = std::make_shared<SceneObjectGroup<TrackModel>>(
+        factory, trackElement.getMeshBuilder().createMesh());
     scene->addObjectGroup(trackGroup);
 
     auto physicsSystem = std::make_shared<physics::System>();
@@ -458,16 +462,16 @@ int main(void)
 
     auto debugOverlayGroup = std::make_shared<SceneObjectGroup<DebugOverlayModel>>(factory);
     auto debugOverlay = debugOverlayGroup->addObject();
-    // sceneView->addDebugOverlayGroup(debugOverlayGroup);
+    sceneView->addDebugOverlayGroup(debugOverlayGroup);
 
-    // auto cameraRayCaster
-    //     = std::make_shared<CameraRayCaster>(camera, debugOverlay, trackGroup->getModel());
+    auto cameraRayCaster
+        = std::make_shared<CameraRayCaster>(camera, debugOverlay, treeBuilder.build());
 
     auto environment = engine.createEnvironment();
     environment->addActor(cameraController);
     environment->addActor(physicsSystem);
     environment->addActor(bikeController);
-    // environment->addActor(cameraRayCaster);
+    environment->addActor(cameraRayCaster);
 
     environment->play();
 

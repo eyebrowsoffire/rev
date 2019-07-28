@@ -37,7 +37,5 @@ void ExtrusionTrackElement::stamp(const glm::mat4& orientation)
 
 void ExtrusionTrackElement::finish() {}
 
-Mesh ExtrusionTrackElement::buildMesh() {
-    return _meshBuilder.createMesh();
-}
+MeshBuilder<TrackVertexData>& ExtrusionTrackElement::getMeshBuilder() { return _meshBuilder; }
 }

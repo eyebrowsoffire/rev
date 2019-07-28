@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rev/geometry/KDTree.h"
 #include "rev/gl/Buffer.h"
 #include "rev/gl/VertexArray.h"
 
@@ -56,6 +57,20 @@ public:
     Mesh createMesh()
     {
         return Mesh{ gsl::span<const VertexData>(_vertices), gsl::span<const GLuint>(_indices) };
+    }
+
+    template <typename SurfaceData>
+    void addTrianglesToTree(KDTreeBuilder<SurfaceData>& builder)
+    {
+        for (size_t i = 0; i < _indices.size() - 2; i += 3) {
+            builder.addTriangle(
+                {
+                    _vertices[_indices[i]].position,
+                    _vertices[_indices[i + 1]].position,
+                    _vertices[_indices[i + 2]].position,
+                },
+                {});
+        }
     }
 
 private:
