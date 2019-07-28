@@ -11,13 +11,15 @@
 #include <rev/ProgramFactory.h>
 #include <rev/Scene.h>
 #include <rev/SceneView.h>
-#include <rev/TrackModel.h>
 #include <rev/WavefrontHelpers.h>
 #include <rev/Window.h>
 #include <rev/lights/LightModels.h>
 #include <rev/physics/Gravity.h>
 #include <rev/physics/Particle.h>
 #include <rev/physics/System.h>
+#include <rev/track/ExtrusionTrackElement.h>
+#include <rev/track/TrackBuilder.h>
+#include <rev/track/TrackModel.h>
 
 #include <glm/ext.hpp>
 
@@ -268,6 +270,7 @@ private:
     bool _thrustersOn = false;
 };
 
+/*
 class CameraRayCaster : public IActor {
 public:
     CameraRayCaster(std::shared_ptr<Camera> camera, std::shared_ptr<DebugOverlay> overlay,
@@ -304,6 +307,7 @@ private:
     TrackModel& _trackModel;
     Triangle<TrackModel::SurfaceData>* _target = nullptr;
 };
+*/
 
 } // namespace
 
@@ -377,8 +381,36 @@ int main(void)
 
     NurbsCurve<glm::vec3> curve(3, knots, controlPoints);
 
+    DieTemplate dieTemplate{ // vertices
+        {
+            { { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } },
+            { { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } },
+
+            { { -1.0f, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f } },
+            { { -1.0f, -0.5f, 0.0f }, { -1.0f, 0.0f, 0.0f } },
+
+            { { -1.0f, -0.5f, 0.0f }, { 0.0f, -1.0f, 0.0f } },
+            { { 1.0f, -0.5f, 0.0f }, { 0.0f, -1.0f, 0.0f } },
+
+            { { 1.0f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f } },
+            { { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } },
+        },
+        // edges
+        {
+            { 0, 1 },
+            { 2, 3 },
+            { 4, 5 },
+            { 6, 7 },
+        }
+    };
+    ExtrusionTrackElement trackElement(std::move(dieTemplate));
+
+    TrackConfiguration config{ curve, width, segmentCount };
+
+    buildTrack(config, trackElement);
+
     auto trackGroup
-        = std::make_shared<SceneObjectGroup<TrackModel>>(factory, curve, width, segmentCount);
+        = std::make_shared<SceneObjectGroup<TrackModel>>(factory, trackElement.buildMesh());
     scene->addObjectGroup(trackGroup);
 
     auto physicsSystem = std::make_shared<physics::System>();
@@ -426,16 +458,16 @@ int main(void)
 
     auto debugOverlayGroup = std::make_shared<SceneObjectGroup<DebugOverlayModel>>(factory);
     auto debugOverlay = debugOverlayGroup->addObject();
-    //sceneView->addDebugOverlayGroup(debugOverlayGroup);
+    // sceneView->addDebugOverlayGroup(debugOverlayGroup);
 
-    auto cameraRayCaster
-        = std::make_shared<CameraRayCaster>(camera, debugOverlay, trackGroup->getModel());
+    // auto cameraRayCaster
+    //     = std::make_shared<CameraRayCaster>(camera, debugOverlay, trackGroup->getModel());
 
     auto environment = engine.createEnvironment();
     environment->addActor(cameraController);
     environment->addActor(physicsSystem);
     environment->addActor(bikeController);
-    environment->addActor(cameraRayCaster);
+    // environment->addActor(cameraRayCaster);
 
     environment->play();
 

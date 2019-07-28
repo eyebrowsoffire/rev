@@ -24,7 +24,6 @@ target_sources(rev PRIVATE
   include/rev/Scene.h
   include/rev/SceneObjectGroup.h
   include/rev/SceneView.h
-  include/rev/TrackModel.h
   include/rev/Types.h
   include/rev/Unit.h
   include/rev/Utilities.h
@@ -33,14 +32,6 @@ target_sources(rev PRIVATE
 
   include/rev/geometry/KDTree.h
   include/rev/geometry/Tools.h
-
-  include/rev/lights/LightShaders.h
-  include/rev/lights/LightModels.h
-
-  include/rev/physics/Gravity.h
-  include/rev/physics/Particle.h
-  include/rev/physics/PhysicsUnits.h
-  include/rev/physics/System.h
 
   include/rev/gl/Buffer.h
   include/rev/gl/Context.h
@@ -52,6 +43,20 @@ target_sources(rev PRIVATE
   include/rev/gl/Uniform.h
   include/rev/gl/VertexArray.h
 
+  include/rev/lights/LightShaders.h
+  include/rev/lights/LightModels.h
+
+  include/rev/physics/Gravity.h
+  include/rev/physics/Particle.h
+  include/rev/physics/PhysicsUnits.h
+  include/rev/physics/System.h
+
+  include/rev/track/ExtrusionTrackElement.h
+  include/rev/track/ITrackElement.h
+  include/rev/track/TrackBuilder.h
+  include/rev/track/TrackModel.h
+  include/rev/track/TrackVertexData.h
+
   src/Camera.cpp
   src/CurveFile.cpp
   src/DebugOverlay.cpp
@@ -61,7 +66,6 @@ target_sources(rev PRIVATE
   src/ObjFile.cpp
   src/Scene.cpp
   src/SceneView.cpp
-  src/TrackModel.cpp
   src/WavefrontHelpers.cpp
   src/Window.cpp
 
@@ -70,6 +74,10 @@ target_sources(rev PRIVATE
   src/physics/Gravity.cpp
   src/physics/Particle.cpp
   src/physics/System.cpp
+
+  src/track/ExtrusionTrackElement.cpp
+  src/track/TrackBuilder.cpp
+  src/track/TrackModel.cpp
 )
 
 target_include_directories(rev PUBLIC include)
