@@ -121,6 +121,7 @@ void main()
 {
     vec3 normal = texture(normals, texCoord).rgb;
     vec3 diffuse = texture(diffuse, texCoord).rgb;
+    vec3 ambientLight = vec3(0.01f) * diffuse;
     vec3 fragmentPosition = texture(fragPosition, texCoord).rgb;
 
     RayInfo rayInfo = getRayInfo(fragmentPosition);
@@ -128,7 +129,8 @@ void main()
     bool isValid = (angleMultiplier > 0.0f) && (rayInfo.attenuation > 0.0f);
     if (!isValid)
     {
-        discard;
+        fragColor = vec4(ambientLight, 1.0f);
+        return;
     }
 
     float specularExponent = texture(specularExponent, texCoord).r;
@@ -137,7 +139,6 @@ void main()
     vec3 reflectVector = normalize(reflect(rayInfo.lightVector, normal));
 
     float specularComponent = max(dot(eyeVector, reflectVector), 0.0f);
-    vec3 ambientLight = vec3(0.01f) * diffuse;
     vec3 diffuseLight = diffuse * lightBaseColor * angleMultiplier;
     vec3 specularLight = (specularExponent > 0.01) 
          ? lightBaseColor * specularCoefficient * pow(vec3(specularComponent), vec3(specularExponent))

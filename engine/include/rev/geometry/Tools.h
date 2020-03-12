@@ -88,7 +88,19 @@ struct AxisAlignedPlane {
     glm::vec3 intersect(const Segment& segment) const
     {
         glm::vec3 direction = segment.end - segment.start;
-        return intersect(Ray{ segment.start, direction }).intersectionPoint;
+        auto [intersectionPoint, t] = intersect(Ray{ segment.start, direction });
+        if (!(t > 0.0f)) {
+            return segment.start;
+        } else if (!(t < 1.0f)) {
+            return segment.end;
+        }
+
+        for (size_t k = 0; k < 3; k++) {
+            if (segment.start[k] == segment.end[k]) {
+                intersectionPoint[k] = segment.start[k];
+            }
+        }
+        return intersectionPoint;
     }
 
     template <typename InputVertexRange, typename LeftBuilder, typename RightBuilder>
@@ -151,6 +163,19 @@ struct AxisAlignedBoundingBox {
             if (other.maximum[k] > maximum[k]) {
                 maximum[k] = other.maximum[k];
             }
+        }
+    }
+
+    void reduceToBox(const AxisAlignedBoundingBox& other)
+    {
+        for (int k = 0; k < 3; k++) {
+            if (other.minimum[k] > minimum[k]) {
+                minimum[k] = other.minimum[k];
+            }
+            if (other.maximum[k] < maximum[k]) {
+                maximum[k] = other.maximum[k];
+            }
+            Expects(!(minimum[k] > maximum[k]));
         }
     }
 

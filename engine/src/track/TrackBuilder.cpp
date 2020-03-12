@@ -27,9 +27,9 @@ void buildTrack(const TrackConfiguration& config, ITrackElement& element)
     size_t previousRightIndex;
 
     while (secondGuidePoint != guidePointsEnd) {
-        glm::vec3 forward = glm::normalize(*firstGuidePoint - *secondGuidePoint);
+        glm::vec3 forward = glm::normalize(*secondGuidePoint - *firstGuidePoint);
         glm::vec3 right = glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::vec3 up = glm::cross(forward, right);
+        glm::vec3 up = glm::cross(right, forward);
 
         glm::vec3 midPoint = (*firstGuidePoint + *secondGuidePoint) / 2.0f;
 

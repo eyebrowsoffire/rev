@@ -35,8 +35,27 @@ struct Triangle {
         return glm::normalize(glm::cross(e1, e2));
     }
 
-    std::array<AxisAlignedBoundingBox, 2> clipAndSplitBoundingBoxes(
-        const AxisAlignedBoundingBox& clipBox, const AxisAlignedPlane& splitPlane)
+    bool isLeftOfPlane(const AxisAlignedPlane& plane) const
+    {
+        for (const auto& vertex : vertices) {
+            if (vertex[plane.dimensionIndex] < plane.boundary) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool isRightOfPlane(const AxisAlignedPlane& plane) const
+    {
+        for (const auto& vertex : vertices) {
+            if (vertex[plane.dimensionIndex] > plane.boundary) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::optional<AxisAlignedBoundingBox> clippedBoundingBox(const AxisAlignedBoundingBox& box)
     {
         // Alternate between these two buffers for input and output
         std::array<glm::vec3, 9> buf1{};
@@ -56,8 +75,12 @@ struct Triangle {
         for (uint8_t dim = 0; dim < 3; dim++) {
             gsl::span<glm::vec3> inputRange(inputIter, inputEnd);
             OutputIteratorPolygonBuilder builder(outputIter);
-            AxisAlignedPlane boundary = { dim, clipBox.minimum[dim] };
+            AxisAlignedPlane boundary = { dim, box.minimum[dim] };
             boundary.splitConvexPolygon(inputRange, NullPolygonBuilder(), builder);
+
+            if (std::distance(outputIter, builder.getIterator()) < 3) {
+                return {};
+            }
 
             std::swap(inputIter, outputIter);
             inputEnd = builder.getIterator();
@@ -67,28 +90,21 @@ struct Triangle {
         for (uint8_t dim = 0; dim < 3; dim++) {
             gsl::span<glm::vec3> inputRange(inputIter, inputEnd);
             OutputIteratorPolygonBuilder builder(outputIter);
-            AxisAlignedPlane boundary = { dim, clipBox.maximum[dim] };
+            AxisAlignedPlane boundary = { dim, box.maximum[dim] };
             boundary.splitConvexPolygon(inputRange, builder, NullPolygonBuilder());
+
+            if (std::distance(outputIter, builder.getIterator()) < 3) {
+                return {};
+            }
 
             std::swap(inputIter, outputIter);
             inputEnd = builder.getIterator();
         }
 
-        // Finally split into left and right polygon via the split plane
-        std::array<glm::vec3, 9> leftVertices;
-        std::array<glm::vec3, 9> rightVertices;
         gsl::span<glm::vec3> inputRange(inputIter, inputEnd);
-
-        OutputIteratorPolygonBuilder leftBuilder(leftVertices.begin());
-        OutputIteratorPolygonBuilder rightBuilder(rightVertices.begin());
-        splitPlane.splitConvexPolygon(inputRange, leftBuilder, rightBuilder);
-
-        gsl::span<glm::vec3> leftRange(leftVertices.data(), &(*leftBuilder.getIterator()));
-        gsl::span<glm::vec3> rightRange(rightVertices.data(), &(*rightBuilder.getIterator()));
-        return std::array<AxisAlignedBoundingBox, 2>{
-            smallestBoxContainingVertices(leftRange),
-            smallestBoxContainingVertices(rightRange),
-        };
+        auto clippedBox = smallestBoxContainingVertices(inputRange);
+        clippedBox.reduceToBox(box);
+        return clippedBox;
     }
 
     struct Hit {
@@ -571,23 +587,32 @@ private:
 
                     if (eventPlane.boundary < plane.boundary) {
                         if (event.type != Event::Type::Starting) {
-                            triangles.erase(event.triangle);
+                            size_t erased = triangles.erase(event.triangle);
+                            Expects(erased == 1);
                             leftTriangles.insert(event.triangle);
+
+                            Expects(event.triangle->isLeftOfPlane(plane));
                         }
                     } else if (eventPlane.boundary > plane.boundary) {
                         if (event.type != Event::Type::Ending) {
-                            triangles.erase(event.triangle);
+                            size_t erased = triangles.erase(event.triangle);
+                            Expects(erased == 1);
                             rightTriangles.insert(event.triangle);
+
+                            Expects(event.triangle->isRightOfPlane(plane));
                         }
                     } else {
                         // On the boundary
-                        triangles.erase(event.triangle);
+                        size_t erased = triangles.erase(event.triangle);
+                        Expects(erased == 1);
                         switch (event.type) {
                         case Event::Type::Starting:
                             rightTriangles.insert(event.triangle);
+                            Expects(event.triangle->isRightOfPlane(plane));
                             break;
                         case Event::Type::Ending:
                             leftTriangles.insert(event.triangle);
+                            Expects(event.triangle->isLeftOfPlane(plane));
                             break;
                         case Event::Type::Planar:
                             if (side == Side::Left) {
@@ -609,23 +634,34 @@ private:
                         rightEvents.insert(event);
                     }
                 }
-                events.clear();
-
-                // Overlapping triangles remain
-                for (const auto& triangle : triangles) {
-                    auto [leftBox, rightBox] = triangle->clipAndSplitBoundingBoxes(box, plane);
-                    for (const auto& event : buildTriangleEvents(leftBox, triangle)) {
-                        leftEvents.insert(event);
-                    }
-                    for (const auto& event : buildTriangleEvents(rightBox, triangle)) {
-                        rightEvents.insert(event);
-                    }
-                    leftTriangles.insert(triangle);
-                    rightTriangles.insert(triangle);
-                }
-                triangles.clear();
 
                 auto [leftBox, rightBox] = box.split(plane);
+                // Overlapping triangles remain
+                for (const auto& triangle : triangles) {
+                    Expects(triangle->isLeftOfPlane(plane));
+                    Expects(triangle->isRightOfPlane(plane));
+
+                    auto leftClipBox = triangle->clippedBoundingBox(leftBox);
+                    if (leftClipBox) {
+                        for (const auto& event : buildTriangleEvents(*leftClipBox, triangle))
+                        {
+                            leftEvents.insert(event);
+                        }
+                        leftTriangles.insert(triangle);
+                    }
+
+                    auto rightClipBox = triangle->clippedBoundingBox(rightBox);
+                    if (rightClipBox) {
+                        for (const auto& event : buildTriangleEvents(*rightClipBox, triangle))
+                        {
+                            rightEvents.insert(event);
+                        }
+                        rightTriangles.insert(triangle);
+                    }
+                }
+                triangles.clear();
+                events.clear();
+
                 return std::make_unique<MapNode<SurfaceData>>(BranchNode<SurfaceData>{
                     plane,
                     createNode(leftBox, std::move(leftEvents), std::move(leftTriangles)),
