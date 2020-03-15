@@ -700,7 +700,7 @@ private:
         const AxisAlignedBoundingBox& box, const std::set<Event>& events, size_t triangleCount)
     {
         float bestCost = std::numeric_limits<float>::infinity();
-        const AxisAlignedPlane* bestPlane;
+        AxisAlignedPlane bestPlane;
         Side bestSide;
 
         std::array<size_t, 3> leftTriangleCounts{ 0 };
@@ -736,13 +736,13 @@ private:
                 leftTriangleCounts[dimension], planarTriangleCount, rightTriangleCounts[dimension]);
             if (cost < bestCost) {
                 bestCost = cost;
-                bestPlane = &candidatePlane;
+                bestPlane = candidatePlane;
                 bestSide = side;
             }
             leftTriangleCounts[dimension] += planarTriangleCount;
             leftTriangleCounts[dimension] += startingTriangleCount;
         }
-        return { *bestPlane, bestSide, bestCost };
+        return { bestPlane, bestSide, bestCost };
     }
 
     std::pair<Side, float> surfaceAreaCostHeuristic(const AxisAlignedBoundingBox& box,
