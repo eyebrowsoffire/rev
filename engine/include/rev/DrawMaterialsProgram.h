@@ -2,6 +2,7 @@
 
 #include "rev/gl/ProgramResource.h"
 #include "rev/MaterialProperties.h"
+#include "rev/shaders/Shader.h"
 
 #include <glm/glm.hpp>
 

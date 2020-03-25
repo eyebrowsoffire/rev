@@ -35,4 +35,11 @@ bool nearEqual(ValueType a, ValueType b,
     return abs(a - b) < ep;
 }
 
+// Copied from boost
+template <typename ValueType, typename Hasher = std::hash<ValueType>>
+void hashCombine(size_t& seed, const ValueType &value)
+{	
+    seed ^= Hasher{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
 } // namespace rev

@@ -51,6 +51,10 @@ target_sources(rev PRIVATE
   include/rev/physics/PhysicsUnits.h
   include/rev/physics/System.h
 
+  include/rev/shaders/Program.h
+  include/rev/shaders/Shader.h
+  include/rev/shaders/ShaderLibrary.h
+
   include/rev/track/ExtrusionTrackElement.h
   include/rev/track/ITrackElement.h
   include/rev/track/TrackBuilder.h
@@ -75,6 +79,10 @@ target_sources(rev PRIVATE
   src/physics/Particle.cpp
   src/physics/System.cpp
 
+  src/shaders/Program.cpp
+  src/shaders/Shader.cpp
+  src/shaders/ShaderLibrary.cpp
+
   src/track/ExtrusionTrackElement.cpp
   src/track/TrackBuilder.cpp
   src/track/TrackModel.cpp
@@ -84,6 +92,7 @@ target_include_directories(rev PUBLIC include)
 target_compile_features(rev PRIVATE cxx_std_17)
 
 target_link_libraries(rev PRIVATE
+  CONAN_PKG::fmt
   CONAN_PKG::glad
   CONAN_PKG::glfw
   CONAN_PKG::glm

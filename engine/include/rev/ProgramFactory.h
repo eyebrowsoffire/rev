@@ -19,7 +19,8 @@ namespace rev {
 //     // Programs must declare a meta-structure called "Source" which provides
 //     the shader source
 //     // code. The ProgramFactory compiles the source code on behalf of the
-//     program. struct Source {
+//     program.
+//     struct Source {
 //         // Returns the vertex shader source code.
 //         static std::string_view getVertexSource();
 //
@@ -71,8 +72,8 @@ private:
         using ProgramSource = typename ProgramType::Source;
 
         ProgramResource programResource;
-        programResource.buildWithSource(ProgramSource::getVertexSource(),
-            ProgramSource::getFragmentSource());
+        programResource.buildWithSource(
+            ProgramSource::getVertexSource(), ProgramSource::getFragmentSource());
 
         auto program = std::make_shared<ProgramType>(std::move(programResource));
         return program;
@@ -99,10 +100,7 @@ private:
 
         std::shared_ptr<ProgramType> getProgram() const { return _program.lock(); }
 
-        void setProgram(const std::shared_ptr<ProgramType>& program)
-        {
-            _program = program;
-        }
+        void setProgram(const std::shared_ptr<ProgramType>& program) { _program = program; }
 
     private:
         std::weak_ptr<ProgramType> _program;

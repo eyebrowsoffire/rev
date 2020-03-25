@@ -6,7 +6,9 @@
 
 #include <array>
 #include <gsl/gsl_assert>
+#include <gsl/span>
 #include <string>
+#include <vector>
 
 namespace rev {
 
@@ -37,24 +39,24 @@ namespace detail {
 } // namespace detail
 
 template <GLenum shaderType>
-class Shader : public Resource<createShader<shaderType>, gl::deleteShader> {
+class ShaderResource : public Resource<createShader<shaderType>, gl::deleteShader> {
 public:
-    void setSource(const std::string_view& source)
+    void setSource(gsl::span<const std::string_view> source)
     {
-        setSource(std::array<std::string_view, 1>{ source });
-    }
-
-    template <size_t arrayLength>
-    void setSource(const std::array<std::string_view, arrayLength>& source)
-    {
-        std::array<const char*, arrayLength> pointers;
-        std::array<GLint, arrayLength> lengths;
-        for (size_t i = 0; i < arrayLength; i++) {
+        size_t sourceCount = source.size();
+        std::vector<const char*> pointers(sourceCount);
+        std::vector<GLint> lengths(sourceCount);
+        for (size_t i = 0; i < source.size(); i++) {
             pointers[i] = source[i].data();
             lengths[i] = static_cast<GLint>(source[i].size());
             Expects(source[i].size() <= std::numeric_limits<GLint>::max());
         }
-        glShaderSource(this->getId(), arrayLength, pointers.data(), lengths.data());
+        glShaderSource(this->getId(), sourceCount, pointers.data(), lengths.data());
+    }
+
+    void setSource(std::string_view source)
+    {
+        setSource(gsl::span<std::string_view>(&source, 1));
     }
 
     void compile() { glCompileShader(this->getId()); }
@@ -72,13 +74,13 @@ public:
     }
 };
 
-using VertexShader = Shader<GL_VERTEX_SHADER>;
-using FragmentShader = Shader<GL_FRAGMENT_SHADER>;
+using VertexShaderResource = ShaderResource<GL_VERTEX_SHADER>;
+using FragmentShaderResource = ShaderResource<GL_FRAGMENT_SHADER>;
 
 class ProgramResource : public Resource<gl::createProgram, gl::deleteProgram> {
 public:
     template <GLenum shaderType>
-    void attachShader(const Shader<shaderType>& shader)
+    void attachShader(const ShaderResource<shaderType>& shader)
     {
         glAttachShader(getId(), shader.getId());
     }
@@ -101,14 +103,14 @@ public:
     void buildWithSource(
         const VertexSourceType& vertexSource, const FragmentSourceType& fragmentSource)
     {
-        VertexShader vShader;
+        VertexShaderResource vShader;
         vShader.setSource(vertexSource);
         vShader.compile();
         if (!vShader.getCompileStatus()) {
             throw vShader.getCompileLog();
         }
 
-        FragmentShader fShader;
+        FragmentShaderResource fShader;
         fShader.setSource(fragmentSource);
         fShader.compile();
         if (!fShader.getCompileStatus()) {

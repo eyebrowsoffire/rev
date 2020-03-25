@@ -20,7 +20,16 @@ public:
     }
 
     Resource& operator=(const Resource&) = delete;
-    Resource& operator=(Resource&& src) = delete;
+    Resource& operator=(Resource&& src)
+    {
+        if (_id != src._id) {
+            if (_id) {
+                destroyFunction(_id);
+            }
+            _id = src._id;
+            src._id = 0;
+        }
+    }
 
     ~Resource()
     {

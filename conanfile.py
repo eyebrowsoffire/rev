@@ -17,7 +17,7 @@ class RevConan(ConanFile):
         "url": "auto",
         "revision": "auto"
     }
-    requires = "glad/0.1.29@bincrafters/stable", "glfw/3.3@bincrafters/stable", "gsl_microsoft/2.0.0@bincrafters/stable", "glm/0.9.9.4@g-truc/stable", "gtest/1.8.1@bincrafters/stable"
+    requires = "glad/0.1.29@bincrafters/stable", "glfw/3.3@bincrafters/stable", "gsl_microsoft/2.0.0@bincrafters/stable", "glm/0.9.9.4@g-truc/stable", "gtest/1.8.1@bincrafters/stable", "fmt/6.0.0@bincrafters/stable"
 
     def build(self):
         cmake = CMake(self)
