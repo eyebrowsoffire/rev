@@ -10,7 +10,7 @@ namespace rev {
 class ISceneObjectGroup;
 class ObjFile;
 class MtlFile;
-class ProgramFactory;
+class ShaderLibrary;
 
 inline glm::vec2 getVec2(std::istringstream& stream)
 {
@@ -30,7 +30,7 @@ inline glm::vec3 getVec3(std::istringstream& stream)
 }
 
 std::shared_ptr<SceneObjectGroup<CompositeModel>>
-createObjectGroupFromWavefrontFiles(ProgramFactory& factory,
+createObjectGroupFromWavefrontFiles(ShaderLibrary& library,
     const ObjFile& objFile,
     const MtlFile& mtlFile);
 } // namespace rev

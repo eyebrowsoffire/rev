@@ -29,6 +29,7 @@ public:
             _id = src._id;
             src._id = 0;
         }
+        return *this;
     }
 
     ~Resource()

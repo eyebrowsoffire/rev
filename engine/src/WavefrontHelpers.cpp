@@ -4,6 +4,7 @@
 #include "rev/MtlFile.h"
 #include "rev/ObjFile.h"
 #include "rev/SceneObjectGroup.h"
+#include "rev/Utilities.h"
 
 #include <glm/glm.hpp>
 #include <unordered_map>
@@ -14,11 +15,11 @@ template <>
 struct hash<glm::uvec3> {
     size_t operator()(const glm::uvec3& s) const noexcept
     {
-        size_t x = std::hash<unsigned int>{}(s.x);
-        size_t y = std::hash<unsigned int>{}(s.y);
-        size_t z = std::hash<unsigned int>{}(s.z);
-
-        return x ^ (y << 8) ^ (z << 16);
+        size_t hash = 0;
+        rev::hashCombine(hash, s.x);
+        rev::hashCombine(hash, s.y);
+        rev::hashCombine(hash, s.z);
+        return hash;
     }
 };
 } // namespace std
@@ -26,7 +27,7 @@ struct hash<glm::uvec3> {
 namespace rev {
 
 std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefrontFiles(
-    ProgramFactory& factory, const ObjFile& objFile, const MtlFile& mtlFile)
+    ShaderLibrary& library, const ObjFile& objFile, const MtlFile& mtlFile)
 {
     std::vector<VertexData> vertexAttributes;
     std::vector<GLuint> indices;
@@ -65,7 +66,7 @@ std::shared_ptr<SceneObjectGroup<CompositeModel>> createObjectGroupFromWavefront
             static_cast<GLsizei>(indices.size() - indexOffset), indexOffset, *properties);
     }
 
-    return std::make_shared<SceneObjectGroup<CompositeModel>>(factory, std::move(components),
+    return std::make_shared<SceneObjectGroup<CompositeModel>>(library, std::move(components),
         gsl::span<const VertexData>(vertexAttributes), gsl::span<const GLuint>(indices));
 }
 } // namespace rev

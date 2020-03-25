@@ -18,10 +18,22 @@ using VariableType = std::type_index;
 struct ShaderVariable {
     VariableType type;
     std::string_view name;
+
+    template <typename ValueType>
+    static ShaderVariable make(std::string_view name)
+    {
+        return { std::type_index(typeid(ValueType)), name };
+    }
 };
 
 struct IndexedShaderVariable : ShaderVariable {
     size_t index;
+
+    template <typename ValueType>
+    static IndexedShaderVariable make(std::string_view name, size_t index)
+    {
+        return IndexedShaderVariable{ std::type_index(typeid(ValueType)), name, index };
+    }    
 };
 
 struct ShaderFunction {
@@ -29,14 +41,14 @@ struct ShaderFunction {
 };
 
 // struct ShaderComponent {
-//     static gsl::span<ShaderVariable> inputs();
-//     static gsl::span<ShaderVariable> outputs();
-//     static gsl::span<ShaderVariable> uniforms();
+//     static inline const std::array<[Indexed]ShaderVariable> inputs;
+//     static inline const std::array<[Indexed]ShaderVariable> outputs;
+//     static inline const std::array<ShaderVariable> uniforms;
 //
-//     static gsl::span<ShaderFunction> requiresFunctions();
-//     static gsl::span<ShaderFunctions> fulfillsFunctions();
+//     static constexpr std::array<ShaderFunction> requiresFunctions;
+//     static constexpr std::array<ShaderFunctions> fulfillsFunctions;
 //
-//     static std::string_view source();
+//     static inline constexpr std::string_view source;
 // }
 
 using ShaderComponentID = std::type_index;
@@ -57,26 +69,26 @@ template <typename Traits>
 struct ShaderComponentInfo {
     ShaderComponentID componentID;
 
-    gsl::span<typename Traits::InputVariableType> inputs;
-    gsl::span<typename Traits::OutputVariableType> outputs;
-    gsl::span<ShaderVariable> uniforms;
+    gsl::span<const typename Traits::InputVariableType> inputs;
+    gsl::span<const typename Traits::OutputVariableType> outputs;
+    gsl::span<const ShaderVariable> uniforms;
 
-    gsl::span<ShaderFunction> requiresFunctions;
-    gsl::span<ShaderFunction> fulfillsFunctions;
+    gsl::span<const ShaderFunction> requiresFunctions;
+    gsl::span<const ShaderFunction> fulfillsFunctions;
 
     std::string_view source;
 
     template <typename Component>
-    static ShaderComponentInfo create()
+    static constexpr ShaderComponentInfo make()
     {
         return {
             std::type_index(typeid(Component)),
-            Component::inputs(),
-            Component::outputs(),
-            Component::uniforms(),
-            Component::requiresFunctions(),
-            Component::fulfillsFunctions(),
-            Component::source(),
+            Component::inputs,
+            Component::outputs,
+            Component::uniforms,
+            Component::requiresFunctions,
+            Component::fulfillsFunctions,
+            Component::source,
         };
     }
 };

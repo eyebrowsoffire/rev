@@ -2,7 +2,6 @@
 
 #include "rev/MaterialProperties.h"
 #include "rev/Mesh.h"
-#include "rev/ProgramFactory.h"
 
 #include <vector>
 
@@ -18,22 +17,41 @@ namespace {
     };
 }
 
-TrackModel::TrackModel(ProgramFactory& factory, Mesh trackMesh)
-    : _program(factory.getProgram<DrawMaterialsProgram>())
+TrackModel::TrackModel(ShaderLibrary& library, Mesh trackMesh)
+    : _program(library.acquireProgram(
+          std::array{ VertexShaderComponentInfo::make<DrawMaterialsVertexComponent>() },
+          std::array{ FragmentShaderComponentInfo::make<DrawMaterialsFragmentComponent>() }))
     , _trackMesh(std::move(trackMesh))
+    , _model(_program->getUniform<glm::mat4>("model"))
+    , _view(_program->getUniform<glm::mat4>("view"))
+    , _projection(_program->getUniform<glm::mat4>("projection"))
+    , _ambient(_program->getUniform<glm::vec3>("fAmbient"))
+    , _emissive(_program->getUniform<glm::vec3>("fEmissive"))
+    , _diffuse(_program->getUniform<glm::vec3>("fDiffuse"))
+    , _specular(_program->getUniform<glm::vec3>("fSpecular"))
+    , _specularExponent(_program->getUniform<float>("fSpecularExponent"))
 {
 }
 
 void TrackModel::render(Camera& camera, gsl::span<std::shared_ptr<TrackObject>>)
 {
     auto context = _program->prepareContext();
-    _program->applyMaterialProperties(kMaterialProperties);
-    _program->model.set(glm::mat4(1.0));
-    _program->view.set(camera.getViewMatrix());
-    _program->projection.set(camera.getProjectionMatrix());
+    bindMaterialProperties(kMaterialProperties);
+    _model.set(glm::mat4(1.0));
+    _view.set(camera.getViewMatrix());
+    _projection.set(camera.getProjectionMatrix());
 
     auto vaoContext = _trackMesh.getContext();
     _trackMesh.drawVertices();
+}
+
+void TrackModel::bindMaterialProperties(const MaterialProperties& properties)
+{
+    _ambient.set(properties.ambientColor);
+    _emissive.set(properties.emissiveColor);
+    _diffuse.set(properties.diffuseColor);
+    _specular.set(properties.specularColor);
+    _specularExponent.set(properties.specularExponent);
 }
 
 }

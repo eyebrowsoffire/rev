@@ -3,9 +3,9 @@
 #include "rev/Camera.h"
 #include "rev/DrawMaterialsProgram.h"
 #include "rev/MaterialProperties.h"
-#include "rev/ProgramFactory.h"
 #include "rev/gl/Buffer.h"
 #include "rev/gl/VertexArray.h"
+#include "rev/shaders/ShaderLibrary.h"
 
 #include <glm/glm.hpp>
 #include <iostream>
@@ -31,17 +31,13 @@ public:
     {
     }
 
-    void draw(DrawMaterialsProgram& program)
+    void draw()
     {
-        program.ambient.set(_properties.ambientColor);
-        program.emissive.set(_properties.emissiveColor);
-        program.diffuse.set(_properties.diffuseColor);
-        program.specular.set(_properties.specularColor);
-        program.specularExponent.set(_properties.specularExponent);
-
         glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT,
             reinterpret_cast<void*>(_indexOffset * sizeof(GLuint)));
     }
+
+    const MaterialProperties& getMaterialProperties() const { return _properties; }
 
 private:
     size_t _indexOffset;
@@ -53,11 +49,23 @@ class CompositeModel {
 public:
     using SceneObjectType = CompositeObject;
 
-    CompositeModel(ProgramFactory& factory, std::vector<ModelComponent>&& components,
+    CompositeModel(ShaderLibrary& library, std::vector<ModelComponent>&& components,
         gsl::span<const VertexData> vertices, gsl::span<const GLuint> indices)
         : _components(std::move(components))
-        , _program(factory.getProgram<DrawMaterialsProgram>())
+        , _program(library.acquireProgram(
+              std::array{ VertexShaderComponentInfo::make<DrawMaterialsVertexComponent>() },
+              std::array{ FragmentShaderComponentInfo::make<DrawMaterialsFragmentComponent>() }))
+        , _model(_program->getUniform<glm::mat4>("model"))
+        , _view(_program->getUniform<glm::mat4>("view"))
+        , _projection(_program->getUniform<glm::mat4>("projection"))
+        , _ambient(_program->getUniform<glm::vec3>("fAmbient"))
+        , _emissive(_program->getUniform<glm::vec3>("fEmissive"))
+        , _diffuse(_program->getUniform<glm::vec3>("fDiffuse"))
+        , _specular(_program->getUniform<glm::vec3>("fSpecular"))
+        , _specularExponent(_program->getUniform<float>("fSpecularExponent"))
     {
+        auto component = VertexShaderComponentInfo::make<DrawMaterialsVertexComponent>();
+
         VertexArrayContext context(_vao);
 
         context.setBuffer<GL_ARRAY_BUFFER>(_vertices);
@@ -77,20 +85,41 @@ public:
         auto programContext = _program->prepareContext();
         VertexArrayContext vertexContext(_vao);
 
-        _program->view.set(camera.getViewMatrix());
-        _program->projection.set(camera.getProjectionMatrix());
+        _view.set(camera.getViewMatrix());
+        _projection.set(camera.getProjectionMatrix());
 
         for (auto& object : objects) {
-            _program->model.set(object->transform);
+            _model.set(object->transform);
 
             for (auto& component : _components) {
-                component.draw(*_program);
+                bindMaterialProperties(component.getMaterialProperties());
+                component.draw();
             }
         }
     }
 
 private:
-    std::shared_ptr<DrawMaterialsProgram> _program;
+    void bindMaterialProperties(const MaterialProperties& properties)
+    {
+        _ambient.set(properties.ambientColor);
+        _emissive.set(properties.emissiveColor);
+        _diffuse.set(properties.diffuseColor);
+        _specular.set(properties.specularColor);
+        _specularExponent.set(properties.specularExponent);
+    }
+
+    std::shared_ptr<Program> _program;
+
+    Uniform<glm::mat4> _model;
+    Uniform<glm::mat4> _view;
+    Uniform<glm::mat4> _projection;
+
+    Uniform<glm::vec3> _ambient;
+    Uniform<glm::vec3> _emissive;
+    Uniform<glm::vec3> _diffuse;
+    Uniform<glm::vec3> _specular;
+    Uniform<float> _specularExponent;
+
     VertexArray _vao;
     Buffer _vertices;
     Buffer _indices;

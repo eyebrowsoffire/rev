@@ -331,8 +331,8 @@ int main(void)
 
     ObjFile meshFile("assets/hoverbike.obj");
     MtlFile materialsFile("assets/hoverbike.mtl");
-    ProgramFactory factory;
-    auto objectGroup = createObjectGroupFromWavefrontFiles(factory, meshFile, materialsFile);
+    ShaderLibrary library;
+    auto objectGroup = createObjectGroupFromWavefrontFiles(library, meshFile, materialsFile);
     auto object = objectGroup->addObject();
     scene->addObjectGroup(objectGroup);
 
@@ -414,7 +414,7 @@ int main(void)
     trackElement.getMeshBuilder().addTrianglesToTree(treeBuilder);
 
     auto trackGroup = std::make_shared<SceneObjectGroup<TrackModel>>(
-        factory, trackElement.getMeshBuilder().createMesh());
+        library, trackElement.getMeshBuilder().createMesh());
     scene->addObjectGroup(trackGroup);
 
     auto physicsSystem = std::make_shared<physics::System>();
@@ -427,6 +427,7 @@ int main(void)
 
     auto bikeController = std::make_shared<BikeController>(bikeParticle, object);
 
+    ProgramFactory factory;
     auto pointLightGroup = std::make_shared<SceneObjectGroup<PointLightModel>>(factory);
     scene->addLightGroup(pointLightGroup);
 

@@ -38,6 +38,11 @@ namespace {
 
         void build()
         {
+            if(_functions.find("main") == _functions.end())
+            {
+                throw std::runtime_error("No main function found when building shader.");
+            }
+
             shaderResource.setSource(_sources);
             shaderResource.compile();
             if (!shaderResource.getCompileStatus()) {
@@ -60,19 +65,19 @@ namespace {
 
         void addObjectName(std::string_view objectName)
         {
-            if (_objectNames.insert(objectName).second) {
+            if (!_objectNames.insert(objectName).second) {
                 throw std::runtime_error(fmt::format("Name collision: {}", objectName));
             }
         }
 
-        void addVariable(const ShaderVariable& variable, std::vector<ShaderVariable> variables)
+        void addVariable(const ShaderVariable& variable, std::vector<ShaderVariable>& variables)
         {
             addObjectName(variable.name);
             variables.push_back(variable);
         }
 
         void addVariable(
-            const IndexedShaderVariable& variable, std::vector<IndexedShaderVariable> variables)
+            const IndexedShaderVariable& variable, std::vector<IndexedShaderVariable>& variables)
         {
             auto iter = std::find_if(variables.begin(), variables.end(),
                 [index = variable.index](
